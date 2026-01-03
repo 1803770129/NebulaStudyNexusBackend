@@ -1,0 +1,84 @@
+.rich-text-editor {
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.rich-text-editor-toolbar {
+  padding: 8px 12px;
+  border-bottom: 1px solid #d9d9d9;
+  background-color: #fafafa;
+}
+
+.rich-text-editor-content {
+  overflow-y: auto;
+}
+
+.rich-text-editor-content .tiptap {
+  padding: 12px;
+  min-height: 100%;
+  outline: none;
+}
+
+.rich-text-editor-content .tiptap:focus {
+  outline: none;
+}
+
+.rich-text-editor-content .tiptap p {
+  margin: 0 0 0.5em 0;
+}
+
+.rich-text-editor-content .tiptap p:last-child {
+  margin-bottom: 0;
+}
+
+.rich-text-editor-content .tiptap ul,
+.rich-text-editor-content .tiptap ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.rich-text-editor-content .tiptap img {
+  max-width: 100%;
+  height: auto;
+  display: inline-block;
+  margin: 4px 0;
+}
+
+.rich-text-editor-content .tiptap .latex-formula {
+  background-color: #f0f5ff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  color: #1890ff;
+}
+
+.rich-text-editor-content .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #adb5bd;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Formula dialog styles */
+.formula-preview {
+  min-height: 60px;
+  padding: 16px;
+  background-color: #fafafa;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.formula-preview-error {
+  color: #ff4d4f;
+  font-size: 12px;
+}
+
+.formula-preview .katex {
+  font-size: 1.2em;
+}

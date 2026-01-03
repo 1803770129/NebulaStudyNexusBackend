@@ -1,0 +1,77 @@
+/**
+ * 路由配置
+ * 
+ * 使用 React Router 7 配置应用路由
+ */
+
+import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { MainLayout } from '@/components/layout'
+
+// 懒加载页面组件
+import { lazy, Suspense } from 'react'
+import { Spin } from 'antd'
+
+const HomePage = lazy(() => import('@/pages/Home'))
+const QuestionListPage = lazy(() => import('@/pages/QuestionList'))
+const QuestionFormPage = lazy(() => import('@/pages/QuestionForm'))
+const CategoryManagePage = lazy(() => import('@/pages/CategoryManage'))
+const TagManagePage = lazy(() => import('@/pages/TagManage'))
+
+// 加载中组件
+const Loading = () => (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: 200 }}>
+    <Spin size="large" />
+  </div>
+)
+
+// 包装懒加载组件
+const withSuspense = (Component: React.LazyExoticComponent<any>) => (
+  <Suspense fallback={<Loading />}>
+    <Component />
+  </Suspense>
+)
+
+/**
+ * 路由配置
+ */
+export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <MainLayout />,
+    children: [
+      {
+        index: true,
+        element: withSuspense(HomePage),
+      },
+      {
+        path: 'questions',
+        children: [
+          {
+            index: true,
+            element: withSuspense(QuestionListPage),
+          },
+          {
+            path: 'create',
+            element: withSuspense(QuestionFormPage),
+          },
+          {
+            path: 'edit/:id',
+            element: withSuspense(QuestionFormPage),
+          },
+        ],
+      },
+      {
+        path: 'categories',
+        element: withSuspense(CategoryManagePage),
+      },
+      {
+        path: 'tags',
+        element: withSuspense(TagManagePage),
+      },
+    ],
+  },
+  {
+    path: '*',
+    element: <Navigate to="/" replace />,
+  },
+])
