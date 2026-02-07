@@ -16,6 +16,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { Response } from 'express';
 import { UploadService } from './upload.service';
+import { Public } from '@/common/decorators/public.decorator';
 import { Multer } from 'multer';
 
 @ApiTags('upload')
@@ -55,6 +56,7 @@ export class UploadController {
     );
   }
 
+  @Public()
   @Get('images/:filename')
   @ApiOperation({ summary: '获取图片' })
   @ApiResponse({ status: 200, description: '获取成功' })

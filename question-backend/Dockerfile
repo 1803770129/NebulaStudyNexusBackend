@@ -1,7 +1,16 @@
-# 构建阶段
+# 构建阶段 - 使用 Docker Hub 镜像加速
 FROM node:20-alpine AS builder
 
+# 设置 Alpine 镜像源为阿里云
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
+# 安装 bcrypt 编译所需的依赖
+RUN apk add --no-cache python3 make g++
+
 WORKDIR /app
+
+# 设置 npm 镜像为淘宝源
+RUN npm config set registry https://registry.npmmirror.com
 
 # 复制依赖文件
 COPY package*.json ./
@@ -18,13 +27,22 @@ RUN npm run build
 # 生产阶段
 FROM node:20-alpine AS production
 
+# 设置 Alpine 镜像源为阿里云
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
+# 安装 bcrypt 编译所需的依赖
+RUN apk add --no-cache python3 make g++
+
 WORKDIR /app
+
+# 设置 npm 镜像为淘宝源
+RUN npm config set registry https://registry.npmmirror.com
 
 # 复制依赖文件
 COPY package*.json ./
 
 # 只安装生产依赖
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 # 从构建阶段复制编译后的代码
 COPY --from=builder /app/dist ./dist

@@ -111,13 +111,16 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
   const api = getApiClient();
   
   try {
-    // 调用登录接口
-    const response = await api.post<AuthResponse>('/auth/login', data);
+    // 调用登录接口，后端返回 { statusCode, message, data: AuthResponse }
+    const response = await api.post<{ data: AuthResponse }>('/auth/login', data);
+    
+    // 从包装的响应中提取实际数据
+    const authData = response.data;
     
     // 存储 Token
-    api.setTokens(response.accessToken, response.refreshToken);
+    api.setTokens(authData.accessToken, authData.refreshToken);
     
-    return response;
+    return authData;
   } catch (error) {
     // 转换错误信息，提供更友好的提示
     if (error instanceof ApiError && error.statusCode === 401) {
@@ -159,13 +162,16 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
 export async function register(data: RegisterRequest): Promise<AuthResponse> {
   const api = getApiClient();
   
-  // 调用注册接口
-  const response = await api.post<AuthResponse>('/auth/register', data);
+  // 调用注册接口，后端返回 { statusCode, message, data: AuthResponse }
+  const response = await api.post<{ data: AuthResponse }>('/auth/register', data);
+  
+  // 从包装的响应中提取实际数据
+  const authData = response.data;
   
   // 注册成功后自动存储 Token（自动登录）
-  api.setTokens(response.accessToken, response.refreshToken);
+  api.setTokens(authData.accessToken, authData.refreshToken);
   
-  return response;
+  return authData;
 }
 
 /**
@@ -181,14 +187,18 @@ export async function register(data: RegisterRequest): Promise<AuthResponse> {
 export async function refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
   const api = getApiClient();
   
-  const response = await api.post<RefreshTokenResponse>('/auth/refresh', {
+  // 后端返回 { statusCode, message, data: RefreshTokenResponse }
+  const response = await api.post<{ data: RefreshTokenResponse }>('/auth/refresh', {
     refreshToken,
   });
   
-  // 更新存储的 Token
-  api.setTokens(response.accessToken, response.refreshToken);
+  // 从包装的响应中提取实际数据
+  const tokenData = response.data;
   
-  return response;
+  // 更新存储的 Token
+  api.setTokens(tokenData.accessToken, tokenData.refreshToken);
+  
+  return tokenData;
 }
 
 /**
@@ -212,7 +222,9 @@ export async function refreshToken(refreshToken: string): Promise<RefreshTokenRe
  */
 export async function getProfile(): Promise<UserProfile> {
   const api = getApiClient();
-  return api.get<UserProfile>('/auth/profile');
+  // 后端返回 { statusCode, message, data: UserProfile }
+  const response = await api.get<{ data: UserProfile }>('/auth/profile');
+  return response.data;
 }
 
 /**

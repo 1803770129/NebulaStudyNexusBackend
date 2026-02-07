@@ -171,13 +171,14 @@ export async function uploadImage(
   const api = getApiClient();
   
   try {
-    const response = await api.upload<UploadResult>(
+    // 后端返回 { statusCode, message, data: UploadResult }
+    const response = await api.upload<{ data: UploadResult }>(
       '/upload/image',
       formData,
       onProgress
     );
     
-    return response;
+    return response.data;
   } catch (error) {
     // 转换错误
     if (error instanceof ApiError) {

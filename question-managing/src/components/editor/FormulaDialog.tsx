@@ -91,7 +91,7 @@ export const FormulaDialog: React.FC<FormulaDialogProps> = ({
       cancelText="取消"
       okButtonProps={{ disabled: !latex.trim() || !!previewResult.error }}
       width={600}
-      destroyOnClose
+      destroyOnHidden
     >
       <Space direction="vertical" style={{ width: '100%' }} size="middle">
         <div>

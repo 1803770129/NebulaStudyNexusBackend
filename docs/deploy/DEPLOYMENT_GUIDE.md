@@ -351,6 +351,87 @@ docker compose version  # 查看 Docker Compose 版本
 
 ---
 
+### 3.5 配置 Docker 镜像加速器（重要！）
+
+Docker Hub 在国内访问受限，拉取镜像会失败。需要配置国内镜像加速器。
+
+#### 步骤1：创建 Docker 配置文件
+
+```bash
+# 创建配置目录
+sudo mkdir -p /etc/docker
+
+# 写入镜像加速器配置
+sudo tee /etc/docker/daemon.json <<EOF
+{
+  "registry-mirrors": [
+    "https://docker.1ms.run",
+    "https://docker.xuanyuan.me"
+  ]
+}
+EOF
+```
+
+**命令解释**：
+| 部分 | 含义 |
+|------|------|
+| `tee` | 同时输出到屏幕和文件 |
+| `<<EOF ... EOF` | Here Document，多行输入 |
+| `daemon.json` | Docker 守护进程配置文件 |
+| `registry-mirrors` | 镜像仓库加速器地址列表 |
+
+#### 步骤2：重启 Docker 服务
+
+```bash
+# 重新加载配置
+sudo systemctl daemon-reload
+
+# 重启 Docker
+sudo systemctl restart docker
+```
+
+**命令解释**：
+| 命令 | 含义 |
+|------|------|
+| `systemctl daemon-reload` | 重新加载 systemd 配置 |
+| `systemctl restart docker` | 重启 Docker 服务 |
+
+#### 步骤3：验证配置生效
+
+```bash
+docker info | grep -A 5 "Registry Mirrors"
+```
+
+应该看到配置的镜像地址。
+
+#### 备选镜像加速器
+
+如果上面的镜像源不可用，可以替换为其他源：
+
+```bash
+sudo nano /etc/docker/daemon.json
+```
+
+替换内容为：
+```json
+{
+  "registry-mirrors": [
+    "https://dockerhub.icu",
+    "https://hub.rat.dev",
+    "https://docker.rainbond.cc"
+  ]
+}
+```
+
+然后重启 Docker：
+```bash
+sudo systemctl restart docker
+```
+
+> **知识点**：镜像加速器相当于 Docker Hub 的国内缓存代理，从国内服务器下载镜像，速度更快更稳定。
+
+---
+
 ## 第四步：从 Windows 连接服务器
 
 在 Windows 上打开 PowerShell 或 CMD：
@@ -381,7 +462,7 @@ Are you sure you want to continue connecting (yes/no)?
 ## 第五步：上传项目到服务器
 
 
-### 方式2：使用 Git（在服务器上执行）
+### 使用 Git（在服务器上执行）
 ```bash
 sudo apt install git -y              # 安装 Git
 git clone https://github.com/你的仓库地址.git
@@ -446,7 +527,7 @@ DB_PASSWORD=YourStrongPassword123!  # 【必改】数据库密码
 DB_DATABASE=question_manager # 数据库名
 
 # JWT 配置（用于用户认证）
-JWT_SECRET=生成一个随机字符串至少32位  # 【必改】JWT 签名密钥
+JWT_SECRET=这里填生成的随机字符串  # 【必改】JWT 签名密钥
 JWT_EXPIRES_IN=1h            # Token 有效期：1小时
 JWT_REFRESH_EXPIRES_IN=7d    # 刷新 Token 有效期：7天
 
@@ -454,6 +535,26 @@ LOG_LEVEL=info               # 日志级别：debug/info/warn/error
 ```
 
 > **重要**：`DB_HOST=postgres` 这里用的是 Docker 服务名，不是 `localhost`。因为 API 和数据库都在 Docker 容器里，通过 Docker 内部网络通信。
+
+#### 如何生成 JWT_SECRET
+
+在 Ubuntu 终端执行以下命令生成随机字符串：
+
+```bash
+# 方式1：生成 32 位 Base64 字符串
+openssl rand -base64 32
+# 输出示例：K7xB9mN2pQ4rT6vW8yA1cE3fG5hJ7kL9nO0pQ2rS
+
+# 方式2：生成 64 位十六进制字符串（更安全）
+openssl rand -hex 32
+# 输出示例：a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456
+```
+
+复制生成的字符串，填入 `.env` 文件的 `JWT_SECRET=` 后面。
+
+> **知识点**：JWT_SECRET 是用于签名和验证 JWT Token 的密钥。必须保密，且足够复杂。如果泄露，攻击者可以伪造任意用户的登录凭证。
+
+---
 
 ### 6.3 启动服务
 ```bash
@@ -474,6 +575,18 @@ docker compose up -d --build
 ```bash
 docker compose ps
 ```
+重启后执行：
+```bash
+```
+cd ~/NebulaStudyNexusBackend/question-backend
+docker compose up -d
+```
+
+重启容器
+docker compose down
+docker compose up -d
+
+
 
 **输出示例**：
 ```
@@ -528,7 +641,7 @@ sudo ufw status        # 查看防火墙状态
 
 ### 在服务器上测试
 ```bash
-curl http://localhost:3000/api/health
+curl http://localhost:3000/api/docs
 ```
 
 **命令解释**：
@@ -844,6 +957,333 @@ sudo netstat -tlnp | grep 3000
 docker compose logs
 # 查看具体错误信息
 ```
+
+### Q: bcrypt 编译失败（gyp ERR! find Python）
+
+**错误信息**：
+```
+npm error gyp ERR! find Python
+npm error gyp ERR! find Python Python is not set from command line or npm configuration
+npm error gyp ERR! find Python You need to install the latest version of Python.
+```
+
+**原因**：`bcrypt` 是一个需要编译的原生模块，Alpine 镜像默认没有 Python 和编译工具。
+
+**解决方案**：修改 Dockerfile，在安装依赖前添加编译工具：
+
+```dockerfile
+# 在 FROM node:20-alpine 之后添加
+RUN apk add --no-cache python3 make g++
+```
+
+完整的 Dockerfile 示例见下方"Dockerfile 详解"章节。
+
+### Q: apt update 报错 Invalid response from proxy
+
+**错误信息**：
+```
+Invalid response from proxy: HTTP/1.1 400 Bad Request
+```
+
+**原因**：Ubuntu 安装时填写的镜像地址被错误配置为代理服务器。
+
+**解决方案**：
+```bash
+# 查找并删除错误的代理配置
+grep -l "Proxy" /etc/apt/apt.conf.d/*
+sudo rm -f /etc/apt/apt.conf.d/*proxy*
+sudo rm -f /etc/apt/apt.conf.d/90curtin-aptproxy
+```
+
+### Q: Docker 拉取镜像失败（connection refused）
+
+**错误信息**：
+```
+failed to resolve reference "docker.io/library/xxx": dial tcp: connect: connection refused
+```
+
+**原因**：Docker Hub 在国内访问受限。
+
+**解决方案**：配置国内镜像加速器，见"3.5 配置 Docker 镜像加速器"章节。
+
+### Q: 数据库表不存在（relation "users" does not exist）
+
+**错误信息**：
+```json
+{
+  "statusCode": 500,
+  "message": "relation \"users\" does not exist"
+}
+```
+
+**原因**：TypeORM 的 `synchronize` 配置只在 `development` 环境启用，但容器内的 `NODE_ENV` 是 `production`。
+
+**排查步骤**：
+```bash
+# 检查容器内的环境变量
+docker compose exec api env | grep NODE_ENV
+
+# 检查 .env 文件
+cat .env | grep NODE_ENV
+```
+
+**解决方案**：
+
+1. 确保 `docker-compose.yml` 使用 `env_file` 加载 `.env`：
+```yaml
+api:
+  env_file:
+    - .env
+  environment:
+    DB_HOST: postgres  # 只覆盖需要的变量
+```
+
+2. 确保 `.env` 中设置：
+```
+NODE_ENV=development
+```
+
+3. 重启服务：
+```bash
+docker compose down
+docker compose up -d
+```
+
+> **注意**：`docker-compose.yml` 中直接写的 `environment` 会覆盖 `.env` 文件的值。
+
+### Q: Apipost/Postman 连接被拒绝（ECONNREFUSED）
+
+**错误信息**：
+```
+connect ECONNREFUSED 172.20.10.2:3000
+检测您的系统代理貌似开小差了
+```
+
+**排查步骤**：
+
+1. 确认容器正在运行：
+```bash
+docker compose ps
+# 状态应该是 Up，不是 Restarting
+```
+
+2. 在服务器上测试：
+```bash
+curl http://localhost:3000/api/docs
+```
+
+3. 检查服务器 IP 是否变化：
+```bash
+hostname -I
+```
+
+**可能原因及解决方案**：
+
+| 原因 | 解决方案 |
+|------|----------|
+| 容器未启动或正在重启 | `docker compose logs api` 查看错误 |
+| IP 地址变了 | 用新 IP 重新连接 |
+| Apipost 代理设置问题 | 设置 → 代理 → 关闭代理 |
+| Windows 防火墙 | 允许 Apipost 通过防火墙 |
+| 容器还在初始化 | 等待 `health: starting` 变成 `healthy` |
+
+### Q: 虚拟机重启后服务不可用
+
+**排查步骤**：
+
+1. 检查 Docker 服务：
+```bash
+sudo systemctl status docker
+```
+
+2. 检查容器状态：
+```bash
+docker compose ps
+```
+
+3. 如果容器没启动：
+```bash
+cd ~/NebulaStudyNexusBackend/question-backend
+docker compose up -d
+```
+
+4. 检查 IP 是否变化：
+```bash
+hostname -I
+```
+
+> **提示**：`docker-compose.yml` 配置了 `restart: unless-stopped`，正常情况下容器会自动启动。
+
+---
+
+## 接口测试指南（Apipost/Postman）
+
+### 基础配置
+
+- **Base URL**: `http://服务器IP:3000/api`
+- **Content-Type**: `application/json`
+
+### 认证接口
+
+#### 1. 用户注册
+```
+POST /api/auth/register
+
+Body:
+{
+  "username": "admin",
+  "email": "admin@example.com",
+  "password": "123456"
+}
+```
+
+#### 2. 用户登录
+```
+POST /api/auth/login
+
+Body:
+{
+  "username": "admin",
+  "password": "123456"
+}
+
+Response:
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+}
+```
+
+#### 3. 获取用户信息（需认证）
+```
+GET /api/auth/profile
+
+Headers:
+Authorization: Bearer {accessToken}
+```
+
+#### 4. 刷新 Token
+```
+POST /api/auth/refresh
+
+Body:
+{
+  "refreshToken": "登录返回的refreshToken"
+}
+```
+
+### Swagger API 文档
+
+浏览器访问 `http://服务器IP:3000/api/docs` 可查看完整的 API 文档。
+
+---
+
+## Dockerfile 详解
+
+项目使用多阶段构建（Multi-stage Build）来优化镜像大小。
+
+### 完整 Dockerfile
+
+```dockerfile
+# 构建阶段
+FROM node:20-alpine AS builder
+
+# 安装 bcrypt 编译所需的依赖
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /app
+
+# 复制依赖文件
+COPY package*.json ./
+
+# 安装依赖
+RUN npm ci
+
+# 复制源代码
+COPY . .
+
+# 构建
+RUN npm run build
+
+# 生产阶段
+FROM node:20-alpine AS production
+
+# 安装 bcrypt 编译所需的依赖
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /app
+
+# 复制依赖文件
+COPY package*.json ./
+
+# 只安装生产依赖
+RUN npm ci --omit=dev
+
+# 从构建阶段复制编译后的代码
+COPY --from=builder /app/dist ./dist
+
+# 设置环境变量
+ENV NODE_ENV=production
+
+# 暴露端口
+EXPOSE 3000
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+
+# 启动应用
+CMD ["node", "dist/main"]
+```
+
+### Dockerfile 指令详解
+
+| 指令 | 含义 |
+|------|------|
+| `FROM node:20-alpine AS builder` | 使用 Node.js 20 Alpine 镜像作为构建阶段基础镜像 |
+| `RUN apk add --no-cache python3 make g++` | 安装编译原生模块所需的工具（Alpine 用 apk，Ubuntu 用 apt） |
+| `WORKDIR /app` | 设置工作目录 |
+| `COPY package*.json ./` | 复制 package.json 和 package-lock.json |
+| `RUN npm ci` | 根据 lock 文件精确安装依赖（比 npm install 更快更可靠） |
+| `COPY . .` | 复制所有源代码 |
+| `RUN npm run build` | 编译 TypeScript 代码 |
+| `FROM node:20-alpine AS production` | 开始新的生产阶段，镜像更小 |
+| `RUN npm ci --omit=dev` | 只安装生产依赖，不安装 devDependencies |
+| `COPY --from=builder /app/dist ./dist` | 从构建阶段复制编译后的代码 |
+| `ENV NODE_ENV=production` | 设置环境变量 |
+| `EXPOSE 3000` | 声明容器监听的端口（文档作用） |
+| `HEALTHCHECK` | 定义健康检查命令 |
+| `CMD ["node", "dist/main"]` | 容器启动时执行的命令 |
+
+### 多阶段构建的优势
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  构建阶段 (builder)                                          │
+│  - 包含所有开发依赖                                           │
+│  - 包含 TypeScript 源码                                      │
+│  - 包含编译工具                                               │
+│  - 镜像较大（~500MB+）                                        │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼ 只复制 dist 目录
+┌─────────────────────────────────────────────────────────────┐
+│  生产阶段 (production)                                       │
+│  - 只有生产依赖                                               │
+│  - 只有编译后的 JS 代码                                       │
+│  - 镜像更小（~200MB）                                         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Alpine vs 标准镜像
+
+| 镜像 | 大小 | 特点 |
+|------|------|------|
+| `node:20` | ~1GB | 基于 Debian，包含更多工具 |
+| `node:20-alpine` | ~150MB | 基于 Alpine Linux，极简 |
+| `node:20-slim` | ~200MB | 精简版 Debian |
+
+Alpine 镜像更小，但使用 `musl` 而不是 `glibc`，某些原生模块需要重新编译。
 
 ---
 

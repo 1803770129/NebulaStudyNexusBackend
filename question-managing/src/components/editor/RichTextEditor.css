@@ -53,6 +53,20 @@
   color: #1890ff;
 }
 
+.rich-text-editor-content .tiptap .latex-formula-rendered {
+  display: inline;
+  vertical-align: baseline;
+}
+
+.rich-text-editor-content .tiptap .latex-formula-rendered .katex {
+  font-size: 1.1em;
+}
+
+.rich-text-editor-content .tiptap .latex-formula-error {
+  color: #ff4d4f;
+  font-size: 12px;
+}
+
 .rich-text-editor-content .tiptap p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;

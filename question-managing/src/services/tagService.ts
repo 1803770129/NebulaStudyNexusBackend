@@ -72,8 +72,8 @@ function convertFormValuesToRequest(data: TagFormValues): CreateTagRequest {
  */
 export async function getAllTags(): Promise<Tag[]> {
   const api = getApiClient();
-  const response = await api.get<TagApiResponse[]>('/tags');
-  return response.map(convertApiResponseToTag);
+  const response = await api.get<{ data: TagApiResponse[] }>('/tags');
+  return response.data.map(convertApiResponseToTag);
 }
 
 /**
@@ -87,8 +87,8 @@ export async function getTagById(id: string): Promise<Tag> {
   const api = getApiClient();
   
   try {
-    const response = await api.get<TagApiResponse>(`/tags/${id}`);
-    return convertApiResponseToTag(response);
+    const response = await api.get<{ data: TagApiResponse }>(`/tags/${id}`);
+    return convertApiResponseToTag(response.data);
   } catch (error) {
     if (error instanceof ApiError && error.statusCode === 404) {
       throw new ServiceError(ErrorType.NOT_FOUND, '标签不存在', 'id');
@@ -117,8 +117,8 @@ export async function createTag(data: TagFormValues): Promise<Tag> {
   
   try {
     const request = convertFormValuesToRequest(data);
-    const response = await api.post<TagApiResponse>('/tags', request);
-    return convertApiResponseToTag(response);
+    const response = await api.post<{ data: TagApiResponse }>('/tags', request);
+    return convertApiResponseToTag(response.data);
   } catch (error) {
     if (error instanceof ApiError && error.statusCode === 409) {
       throw new ServiceError(
@@ -144,8 +144,8 @@ export async function updateTag(id: string, data: TagFormValues): Promise<Tag> {
   
   try {
     const request = convertFormValuesToRequest(data);
-    const response = await api.patch<TagApiResponse>(`/tags/${id}`, request);
-    return convertApiResponseToTag(response);
+    const response = await api.patch<{ data: TagApiResponse }>(`/tags/${id}`, request);
+    return convertApiResponseToTag(response.data);
   } catch (error) {
     if (error instanceof ApiError) {
       if (error.statusCode === 404) {

@@ -20,7 +20,7 @@ import type {
   Option,
 } from '@/types';
 import { ErrorType, type AppError, getRawContent } from '@/types';
-import { getApiClient, ApiError, type PaginatedApiResponse } from '@/lib/apiClient';
+import { getApiClient, ApiError } from '@/lib/apiClient';
 
 // ==================== 类型定义 ====================
 
@@ -51,6 +51,14 @@ interface OptionApiResponse {
 }
 
 /**
+ * API 返回的标签格式
+ */
+interface TagApiResponse {
+  id: string;
+  name: string;
+}
+
+/**
  * API 返回的题目格式
  */
 interface QuestionApiResponse {
@@ -60,7 +68,7 @@ interface QuestionApiResponse {
   type: Question['type'];
   difficulty: Question['difficulty'];
   categoryId: string;
-  tagIds: string[];
+  tags?: TagApiResponse[];  // 后端返回的是 tags 对象数组
   options?: OptionApiResponse[];
   answer: string | string[];
   explanation?: RichContent;
@@ -135,7 +143,7 @@ function convertApiResponseToQuestion(api: QuestionApiResponse): Question {
     type: api.type,
     difficulty: api.difficulty,
     categoryId: api.categoryId,
-    tagIds: api.tagIds || [],
+    tagIds: api.tags?.map(tag => tag.id) || [],  // 从 tags 对象数组提取 id
     options: api.options?.map(convertApiOptionToOption),
     answer: api.answer,
     explanation: api.explanation,
@@ -250,15 +258,15 @@ export async function getQuestions(
     params.tagIds = filters.tagIds;
   }
   
-  // 调用 API
-  const response = await api.get<PaginatedApiResponse<QuestionApiResponse>>('/questions', params);
+  // 调用 API，后端返回 { statusCode, message, data: { data, total, page, pageSize } }
+  const response = await api.get<{ data: { data: QuestionApiResponse[]; total: number; page: number; pageSize: number } }>('/questions', params);
   
   // 转换数据格式
   return {
-    data: response.data.map(convertApiResponseToQuestion),
-    total: response.meta.total,
-    page: response.meta.page,
-    pageSize: response.meta.pageSize,
+    data: response.data.data.map(convertApiResponseToQuestion),
+    total: response.data.total,
+    page: response.data.page,
+    pageSize: response.data.pageSize,
   };
 }
 
@@ -284,8 +292,9 @@ export async function getQuestionById(id: string): Promise<Question> {
   const api = getApiClient();
   
   try {
-    const response = await api.get<QuestionApiResponse>(`/questions/${id}`);
-    return convertApiResponseToQuestion(response);
+    // 后端返回 { statusCode, message, data: QuestionApiResponse }
+    const response = await api.get<{ data: QuestionApiResponse }>(`/questions/${id}`);
+    return convertApiResponseToQuestion(response.data);
   } catch (error) {
     if (error instanceof ApiError && error.statusCode === 404) {
       throw new ServiceError(ErrorType.NOT_FOUND, '题目不存在', 'id');
@@ -321,9 +330,10 @@ export async function createQuestion(data: QuestionFormValues): Promise<Question
   const api = getApiClient();
   
   const request = convertFormValuesToRequest(data);
-  const response = await api.post<QuestionApiResponse>('/questions', request);
+  // 后端返回 { statusCode, message, data: QuestionApiResponse }
+  const response = await api.post<{ data: QuestionApiResponse }>('/questions', request);
   
-  return convertApiResponseToQuestion(response);
+  return convertApiResponseToQuestion(response.data);
 }
 
 /**
@@ -339,8 +349,9 @@ export async function updateQuestion(id: string, data: QuestionFormValues): Prom
   
   try {
     const request = convertFormValuesToRequest(data);
-    const response = await api.patch<QuestionApiResponse>(`/questions/${id}`, request);
-    return convertApiResponseToQuestion(response);
+    // 后端返回 { statusCode, message, data: QuestionApiResponse }
+    const response = await api.patch<{ data: QuestionApiResponse }>(`/questions/${id}`, request);
+    return convertApiResponseToQuestion(response.data);
   } catch (error) {
     if (error instanceof ApiError && error.statusCode === 404) {
       throw new ServiceError(ErrorType.NOT_FOUND, '题目不存在', 'id');

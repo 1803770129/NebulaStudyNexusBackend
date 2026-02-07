@@ -6,11 +6,13 @@
 
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { MainLayout } from '@/components/layout'
+import { AuthGuard } from '@/components/AuthGuard'
 
 // 懒加载页面组件
 import { lazy, Suspense } from 'react'
 import { Spin } from 'antd'
 
+const LoginPage = lazy(() => import('@/pages/Login'))
 const HomePage = lazy(() => import('@/pages/Home'))
 const QuestionListPage = lazy(() => import('@/pages/QuestionList'))
 const QuestionFormPage = lazy(() => import('@/pages/QuestionForm'))
@@ -36,8 +38,16 @@ const withSuspense = (Component: React.LazyExoticComponent<any>) => (
  */
 export const router = createBrowserRouter([
   {
+    path: '/login',
+    element: withSuspense(LoginPage),
+  },
+  {
     path: '/',
-    element: <MainLayout />,
+    element: (
+      <AuthGuard>
+        <MainLayout />
+      </AuthGuard>
+    ),
     children: [
       {
         index: true,

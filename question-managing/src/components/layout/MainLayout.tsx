@@ -6,7 +6,8 @@
  */
 
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Menu, Button, theme } from 'antd'
+import { Layout, Menu, Button, theme, Dropdown, Avatar, Space } from 'antd'
+import type { MenuProps } from 'antd'
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -14,8 +15,11 @@ import {
   FolderOutlined,
   TagsOutlined,
   HomeOutlined,
+  UserOutlined,
+  LogoutOutlined,
 } from '@ant-design/icons'
 import { useUIStore } from '@/stores'
+import { useAuth } from '@/hooks/useAuth'
 
 const { Header, Sider, Content } = Layout
 
@@ -57,6 +61,7 @@ export function MainLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const { sidebarCollapsed, toggleSidebar } = useUIStore()
+  const { user, logout } = useAuth()
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken()
@@ -65,6 +70,31 @@ export function MainLayout() {
   const handleMenuClick = ({ key }: { key: string }) => {
     navigate(key)
   }
+
+  // 处理登出
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
+
+  // 用户下拉菜单
+  const userMenuItems: MenuProps['items'] = [
+    {
+      key: 'profile',
+      icon: <UserOutlined />,
+      label: user?.username || '用户',
+      disabled: true,
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'logout',
+      icon: <LogoutOutlined />,
+      label: '退出登录',
+      onClick: handleLogout,
+    },
+  ]
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -128,21 +158,32 @@ export function MainLayout() {
             background: colorBgContainer,
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'space-between',
             position: 'sticky',
             top: 0,
             zIndex: 1,
             boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
           }}
         >
-          <Button
-            type="text"
-            icon={sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={toggleSidebar}
-            style={{ fontSize: 16, width: 64, height: 64 }}
-          />
-          <span style={{ marginLeft: 16, fontSize: 16, fontWeight: 500 }}>
-            题目后台管理系统
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <Button
+              type="text"
+              icon={sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={toggleSidebar}
+              style={{ fontSize: 16, width: 64, height: 64 }}
+            />
+            <span style={{ marginLeft: 16, fontSize: 16, fontWeight: 500 }}>
+              题目后台管理系统
+            </span>
+          </div>
+          
+          {/* 用户信息 */}
+          <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+            <Space style={{ cursor: 'pointer' }}>
+              <Avatar icon={<UserOutlined />} />
+              <span>{user?.username}</span>
+            </Space>
+          </Dropdown>
         </Header>
 
         {/* 内容区 */}

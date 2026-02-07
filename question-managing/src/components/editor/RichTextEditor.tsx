@@ -1,4 +1,4 @@
-import React, { useCallback, useState, forwardRef, useImperativeHandle } from 'react';
+import { useCallback, useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
@@ -15,40 +15,55 @@ import {
   RedoOutlined,
 } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
+import 'katex/dist/katex.min.css';
 import { FormulaDialog } from './FormulaDialog';
+import { ImageEditDialog } from './ImageEditDialog';
+import { LatexExtension } from './LatexExtension';
 import { uploadImage } from '../../services/uploadService';
 import './RichTextEditor.css';
 
+// 获取 API 基础 URL（去掉 /api 后缀）
+const getBaseUrl = (): string => {
+  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+  return apiUrl.replace(/\/api$/, '');
+};
+
+/**
+ * 将内容中的相对图片路径转换为完整 URL
+ */
+const convertImageUrls = (html: string): string => {
+  if (!html) return html;
+  const baseUrl = getBaseUrl();
+  return html.replace(
+    /src=["'](\/(?:api\/)?upload\/images\/[^"']+)["']/g,
+    (_, path) => {
+      const fullPath = path.startsWith('/api') ? path : `/api${path}`;
+      return `src="${baseUrl}${fullPath}"`;
+    }
+  );
+};
+
 export interface RichTextEditorProps {
-  /** 初始内容 (raw HTML) */
   value?: string;
-  /** 内容变化回调 */
   onChange?: (content: string) => void;
-  /** 占位符文本 */
   placeholder?: string;
-  /** 是否只读 */
   readonly?: boolean;
-  /** 编辑器高度 */
   height?: number | string;
-  /** 是否为简化模式（用于选项编辑） */
   simple?: boolean;
 }
 
 export interface RichTextEditorRef {
-  /** 获取 HTML 内容 */
   getHTML: () => string;
-  /** 设置 HTML 内容 */
   setHTML: (html: string) => void;
-  /** 清空内容 */
   clear: () => void;
-  /** 聚焦编辑器 */
   focus: () => void;
 }
-
 
 export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>(
   ({ value = '', onChange, placeholder = '请输入内容...', readonly = false, height = 200, simple = false }, ref) => {
     const [formulaDialogVisible, setFormulaDialogVisible] = useState(false);
+    const [imageEditVisible, setImageEditVisible] = useState(false);
+    const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
 
     const editor = useEditor({
@@ -59,17 +74,30 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           codeBlock: simple ? false : undefined,
           horizontalRule: simple ? false : undefined,
         }),
-        Image.configure({
-          inline: true,
-          allowBase64: true,
-        }),
+        Image.configure({ inline: true, allowBase64: true }),
+        LatexExtension,
       ],
-      content: value,
+      content: '',
       editable: !readonly,
+      immediatelyRender: false,
       onUpdate: ({ editor }) => {
         onChange?.(editor.getHTML());
       },
     });
+
+    useEffect(() => {
+      if (editor && value !== undefined && value !== '') {
+        if (!editor.isDestroyed) {
+          const processedValue = convertImageUrls(value);
+          const currentContent = editor.getHTML();
+          const normalizedCurrent = currentContent === '<p></p>' ? '' : currentContent;
+          const normalizedValue = processedValue === '<p></p>' ? '' : processedValue;
+          if (normalizedValue && normalizedValue !== normalizedCurrent) {
+            editor.commands.setContent(processedValue);
+          }
+        }
+      }
+    }, [editor, value]);
 
     useImperativeHandle(ref, () => ({
       getHTML: () => editor?.getHTML() || '',
@@ -83,7 +111,9 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       try {
         const result = await uploadImage(file);
         if (editor && result.url) {
-          editor.chain().focus().setImage({ src: result.url }).run();
+          const baseUrl = getBaseUrl();
+          const fullUrl = result.url.startsWith('http') ? result.url : `${baseUrl}${result.url}`;
+          editor.chain().focus().setImage({ src: fullUrl }).run();
           message.success('图片上传成功');
         }
       } catch (error) {
@@ -92,6 +122,22 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
         setUploading(false);
       }
     }, [editor]);
+
+    const handleImageSelect = useCallback((file: File) => {
+      setPendingImageFile(file);
+      setImageEditVisible(true);
+    }, []);
+
+    const handleImageEditConfirm = useCallback(async (editedFile: File) => {
+      setImageEditVisible(false);
+      setPendingImageFile(null);
+      await handleImageUpload(editedFile);
+    }, [handleImageUpload]);
+
+    const handleImageEditCancel = useCallback(() => {
+      setImageEditVisible(false);
+      setPendingImageFile(null);
+    }, []);
 
     const uploadProps: UploadProps = {
       accept: 'image/jpeg,image/png,image/gif,image/webp',
@@ -102,23 +148,21 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           message.error('只支持 JPG、PNG、GIF、WEBP 格式的图片');
           return false;
         }
-        const isLt5M = file.size / 1024 / 1024 < 5;
-        if (!isLt5M) {
-          message.error('图片大小不能超过 5MB');
+        if (file.size / 1024 / 1024 > 10) {
+          message.error('图片大小不能超过 10MB');
           return false;
         }
-        handleImageUpload(file);
+        handleImageSelect(file);
         return false;
       },
     };
 
-
     const handleFormulaInsert = useCallback((latex: string) => {
       if (editor) {
-        // Insert formula as a special span with data attribute for LaTeX
-        // Using inline formula format: $...$
-        const formulaHtml = `<span class="latex-formula" data-latex="${encodeURIComponent(latex)}">$${latex}$</span>`;
-        editor.chain().focus().insertContent(formulaHtml).run();
+        editor.chain().focus().insertContent({
+          type: 'latexFormula',
+          attrs: { latex: encodeURIComponent(latex) },
+        }).run();
       }
       setFormulaDialogVisible(false);
     }, [editor]);
@@ -126,6 +170,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     if (!editor) {
       return null;
     }
+
 
     const toolbarButtons = simple ? (
       <Space size="small" wrap>
@@ -230,7 +275,6 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       </Space>
     );
 
-
     return (
       <div className="rich-text-editor">
         {!readonly && (
@@ -248,6 +292,12 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           visible={formulaDialogVisible}
           onConfirm={handleFormulaInsert}
           onCancel={() => setFormulaDialogVisible(false)}
+        />
+        <ImageEditDialog
+          visible={imageEditVisible}
+          imageFile={pendingImageFile}
+          onConfirm={handleImageEditConfirm}
+          onCancel={handleImageEditCancel}
         />
       </div>
     );

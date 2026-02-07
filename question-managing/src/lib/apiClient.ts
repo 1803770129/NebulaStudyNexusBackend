@@ -163,7 +163,7 @@ export function convertToApiError(error: AxiosError<ApiErrorResponse>): ApiError
     // 请求已发送但没有收到响应
     return new ApiError(
       ErrorType.NETWORK_ERROR,
-      '网络错误，请检查网络连接',
+      '网络错误，请检查网络连接或服务器是否启动',
       0
     );
   }
@@ -174,6 +174,29 @@ export function convertToApiError(error: AxiosError<ApiErrorResponse>): ApiError
     error.message || '请求配置错误',
     0
   );
+}
+
+/**
+ * 全局错误提示回调
+ * 用于在 API 错误时显示提示
+ */
+let globalErrorHandler: ((error: ApiError) => void) | null = null;
+
+/**
+ * 设置全局错误处理器
+ * @param handler 错误处理回调函数
+ */
+export function setGlobalErrorHandler(handler: (error: ApiError) => void): void {
+  globalErrorHandler = handler;
+}
+
+/**
+ * 触发全局错误提示
+ */
+function triggerGlobalError(error: ApiError): void {
+  if (globalErrorHandler) {
+    globalErrorHandler(error);
+  }
 }
 
 
@@ -303,15 +326,18 @@ class ApiClient {
           } catch (refreshError) {
             // 刷新失败，清除 Token
             this.clearTokens();
-            // 可以在这里触发登出事件
-            return Promise.reject(convertToApiError(error));
+            const apiError = convertToApiError(error);
+            triggerGlobalError(apiError);
+            return Promise.reject(apiError);
           } finally {
             this.isRefreshing = false;
           }
         }
 
-        // 其他错误，转换为 ApiError
-        return Promise.reject(convertToApiError(error));
+        // 其他错误，转换为 ApiError 并触发全局提示
+        const apiError = convertToApiError(error);
+        triggerGlobalError(apiError);
+        return Promise.reject(apiError);
       }
     );
   }

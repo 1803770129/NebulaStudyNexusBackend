@@ -76,8 +76,8 @@ function convertFormValuesToRequest(data: CategoryFormValues): CreateCategoryReq
  */
 export async function getAllCategories(): Promise<Category[]> {
   const api = getApiClient();
-  const response = await api.get<CategoryApiResponse[]>('/categories');
-  return response.map(convertApiResponseToCategory);
+  const response = await api.get<{ data: CategoryApiResponse[] }>('/categories');
+  return response.data.map(convertApiResponseToCategory);
 }
 
 /**
@@ -91,8 +91,8 @@ export async function getCategoryById(id: string): Promise<Category> {
   const api = getApiClient();
   
   try {
-    const response = await api.get<CategoryApiResponse>(`/categories/${id}`);
-    return convertApiResponseToCategory(response);
+    const response = await api.get<{ data: CategoryApiResponse }>(`/categories/${id}`);
+    return convertApiResponseToCategory(response.data);
   } catch (error) {
     if (error instanceof ApiError && error.statusCode === 404) {
       throw new ServiceError(ErrorType.NOT_FOUND, '分类不存在', 'id');
@@ -126,8 +126,8 @@ export async function createCategory(data: CategoryFormValues): Promise<Category
   
   try {
     const request = convertFormValuesToRequest(data);
-    const response = await api.post<CategoryApiResponse>('/categories', request);
-    return convertApiResponseToCategory(response);
+    const response = await api.post<{ data: CategoryApiResponse }>('/categories', request);
+    return convertApiResponseToCategory(response.data);
   } catch (error) {
     if (error instanceof ApiError) {
       // 处理特定错误
@@ -163,8 +163,8 @@ export async function updateCategory(id: string, data: CategoryFormValues): Prom
   
   try {
     const request = convertFormValuesToRequest(data);
-    const response = await api.patch<CategoryApiResponse>(`/categories/${id}`, request);
-    return convertApiResponseToCategory(response);
+    const response = await api.patch<{ data: CategoryApiResponse }>(`/categories/${id}`, request);
+    return convertApiResponseToCategory(response.data);
   } catch (error) {
     if (error instanceof ApiError) {
       if (error.statusCode === 404) {
@@ -232,6 +232,39 @@ export async function getChildCategories(parentId: string | null): Promise<Categ
 }
 
 /**
+ * 后端返回的树节点格式
+ */
+interface ApiCategoryTreeNode {
+  id: string;
+  name: string;
+  level: number;
+  path: string;
+  questionCount: number;
+  children: ApiCategoryTreeNode[];
+}
+
+/**
+ * 将后端树节点转换为前端格式
+ */
+function convertApiTreeNode(node: ApiCategoryTreeNode): CategoryTreeNode {
+  return {
+    key: node.id,
+    title: node.name,
+    children: node.children?.map(convertApiTreeNode) || [],
+    data: {
+      id: node.id,
+      name: node.name,
+      parentId: null, // 树结构中不需要 parentId
+      level: node.level,
+      path: node.path,
+      questionCount: node.questionCount,
+      createdAt: '',
+      updatedAt: '',
+    },
+  };
+}
+
+/**
  * 获取分类树
  * 
  * 从后端获取树形结构的分类数据
@@ -243,8 +276,8 @@ export async function getCategoryTree(): Promise<CategoryTreeNode[]> {
   
   try {
     // 尝试调用后端的树形接口
-    const response = await api.get<CategoryTreeNode[]>('/categories/tree');
-    return response;
+    const response = await api.get<{ data: ApiCategoryTreeNode[] }>('/categories/tree');
+    return response.data.map(convertApiTreeNode);
   } catch {
     // 如果后端没有树形接口，则在前端构建
     const categories = await getAllCategories();
