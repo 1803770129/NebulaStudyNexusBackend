@@ -1,0 +1,36 @@
+# 本地构建版 Dockerfile
+# 适用于网络不稳定的情况
+# 使用方法：先在本地运行 npm install 和 npm run build
+
+FROM node:20-alpine
+
+# 设置 Alpine 镜像源为阿里云
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
+# 安装运行时依赖
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /app
+
+# 复制 package.json
+COPY package*.json ./
+
+# 复制已经在本地构建好的 node_modules 和 dist
+COPY node_modules ./node_modules
+COPY dist ./dist
+
+# 复制 uploads 目录（如果存在）
+COPY uploads ./uploads 2>/dev/null || true
+
+# 设置环境变量
+ENV NODE_ENV=production
+
+# 暴露端口
+EXPOSE 3000
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+
+# 启动应用
+CMD ["node", "dist/main"]

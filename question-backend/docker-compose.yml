@@ -29,7 +29,7 @@ services:
     environment:
       DB_HOST: postgres
     ports:
-      - "3000:3000"
+      - "3000:3003"
     volumes:
       - ./uploads:/app/uploads  # 挂载上传目录，持久化图片文件
     depends_on:

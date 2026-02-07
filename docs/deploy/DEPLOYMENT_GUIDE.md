@@ -536,6 +536,182 @@ LOG_LEVEL=info               # 日志级别：debug/info/warn/error
 
 > **重要**：`DB_HOST=postgres` 这里用的是 Docker 服务名，不是 `localhost`。因为 API 和数据库都在 Docker 容器里，通过 Docker 内部网络通信。
 
+
+
+### JWT 密钥配置
+
+```bash
+# 生成随机密钥的方法（在终端执行）：
+
+# 方法 1：使用 Node.js
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+# 方法 2：使用 OpenSSL
+openssl rand -hex 32
+
+# 方法 3：在线生成
+# 访问：https://www.random.org/strings/
+```
+
+## 配置示例
+
+### 示例 1：最小配置（开发测试）
+
+```bash
+NODE_ENV=production
+PORT=3000
+
+# 数据库（Docker 会自动创建）
+DB_HOST=postgres
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=test123456
+DB_DATABASE=question_manager
+
+# JWT（使用简单密钥，仅用于测试）
+JWT_SECRET=my-test-secret-key-123
+JWT_EXPIRES_IN=7d
+JWT_REFRESH_SECRET=my-test-refresh-key-456
+JWT_REFRESH_EXPIRES_IN=30d
+
+# 微信小程序（暂时留空，后面配置）
+WECHAT_APPID=
+WECHAT_SECRET=
+
+# 文件上传
+UPLOAD_DEST=./uploads
+MAX_FILE_SIZE=5242880
+```
+
+### 示例 2：生产环境配置
+
+```bash
+NODE_ENV=production
+PORT=3000
+
+# 数据库
+DB_HOST=postgres
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=Prod@2024!SecurePass#789
+DB_DATABASE=question_manager
+
+# JWT（使用强密钥）
+JWT_SECRET=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6
+JWT_EXPIRES_IN=7d
+JWT_REFRESH_SECRET=z6y5x4w3v2u1t0s9r8q7p6o5n4m3l2k1j0i9h8g7f6e5d4c3b2a1
+JWT_REFRESH_EXPIRES_IN=30d
+
+# 微信小程序
+WECHAT_APPID=wx1234567890abcdef
+WECHAT_SECRET=abcdef1234567890abcdef1234567890
+
+# 文件上传
+UPLOAD_DEST=./uploads
+MAX_FILE_SIZE=5242880
+```
+
+## 启动流程
+
+配置好 `.env` 文件后：
+
+```bash
+# 1. 确保在 question-backend 目录
+cd question-backend
+
+# 2. 启动所有服务（Docker 会自动创建数据库）
+docker compose up -d
+
+# 3. 查看日志，确认数据库创建成功
+docker compose logs postgres
+
+# 4. 查看所有服务状态
+docker compose ps
+```
+
+## Docker 自动创建的内容
+
+当你运行 `docker-compose up` 时，Docker 会自动：
+
+1. ✅ 创建 PostgreSQL 容器
+2. ✅ 使用 `DB_USERNAME` 创建数据库用户
+3. ✅ 使用 `DB_PASSWORD` 设置用户密码
+4. ✅ 使用 `DB_DATABASE` 创建数据库
+5. ✅ 创建持久化存储卷（数据不会丢失）
+6. ✅ 配置网络，让应用能连接数据库
+
+## 验证配置
+
+### 方法 1：查看容器日志
+
+```bash
+# 查看数据库日志
+docker-compose logs postgres
+
+# 应该看到类似输出：
+# database system is ready to accept connections
+```
+
+### 方法 2：连接数据库
+
+```bash
+# 进入数据库容器
+docker exec -it question-db psql -U postgres -d question_manager
+
+# 如果成功连接，会看到：
+# question_manager=#
+```
+
+### 方法 3：使用 pgAdmin
+
+1. 打开浏览器访问：`http://localhost:5050`
+2. 登录：
+   - Email: `admin@admin.com`
+   - Password: `admin`
+3. 添加服务器：
+   - Host: `postgres`
+   - Port: `5432`
+   - Username: 你在 `.env` 中设置的 `DB_USERNAME`
+   - Password: 你在 `.env` 中设置的 `DB_PASSWORD`
+
+## 常见问题
+
+### Q1: 我需要先安装 PostgreSQL 吗？
+**A:** 不需要！Docker 会自动下载和运行 PostgreSQL。
+
+### Q2: 数据库密码可以随便设置吗？
+**A:** 可以，但建议使用强密码。这个密码只在 Docker 内部使用。
+
+### Q3: 如果我改了密码怎么办？
+**A:** 
+1. 停止服务：`docker-compose down`
+2. 删除数据卷：`docker volume rm question-backend_postgres_data`
+3. 修改 `.env` 文件
+4. 重新启动：`docker-compose up -d`
+
+### Q4: DB_HOST 为什么不能是 localhost？
+**A:** 因为在 Docker 网络中，`localhost` 指向容器自己，而不是数据库容器。必须使用服务名 `postgres`。
+
+### Q5: 数据会丢失吗？
+**A:** 不会！数据存储在 Docker 卷中，即使重启容器也不会丢失。
+
+## 下一步
+
+配置好 `.env` 文件后：
+
+1. ✅ 运行 `docker-compose up -d`
+2. ✅ 等待服务启动（约 30 秒）
+3. ✅ 访问 `http://localhost:3000` 测试 API
+4. ✅ 访问 `http://localhost:5050` 查看数据库
+
+## 需要帮助？
+
+如果遇到问题：
+1. 查看日志：`docker-compose logs`
+2. 检查服务状态：`docker-compose ps`
+3. 重启服务：`docker-compose restart`
+
+
 #### 如何生成 JWT_SECRET
 
 在 Ubuntu 终端执行以下命令生成随机字符串：

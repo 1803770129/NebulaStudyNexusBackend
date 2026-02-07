@@ -9,14 +9,18 @@ RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
-# 设置 npm 镜像为淘宝源
-RUN npm config set registry https://registry.npmmirror.com
+# 设置 npm 镜像和超时配置
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm config set fetch-timeout 600000 && \
+    npm config set fetch-retries 5 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000
 
 # 复制依赖文件
 COPY package*.json ./
 
-# 安装依赖
-RUN npm ci
+# 安装依赖（使用 npm install 代替 npm ci，更容错）
+RUN npm install --production=false --legacy-peer-deps
 
 # 复制源代码
 COPY . .
@@ -35,14 +39,18 @@ RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
-# 设置 npm 镜像为淘宝源
-RUN npm config set registry https://registry.npmmirror.com
+# 设置 npm 镜像和超时配置
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm config set fetch-timeout 600000 && \
+    npm config set fetch-retries 5 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000
 
 # 复制依赖文件
 COPY package*.json ./
 
 # 只安装生产依赖
-RUN npm ci --omit=dev
+RUN npm install --production=true --legacy-peer-deps
 
 # 从构建阶段复制编译后的代码
 COPY --from=builder /app/dist ./dist
