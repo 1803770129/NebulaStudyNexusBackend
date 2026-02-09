@@ -28,4 +28,10 @@ export default () => ({
 
   // 日志配置
   logLevel: process.env.LOG_LEVEL || 'debug',
+   // GitHub 图床配置
+  github: {
+    token: process.env.GITHUB_TOKEN,
+    repo: process.env.GITHUB_REPO,
+    branch: process.env.GITHUB_BRANCH || 'main',
+  },
 });

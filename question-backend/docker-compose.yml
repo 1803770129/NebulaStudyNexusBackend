@@ -29,9 +29,10 @@ services:
     environment:
       DB_HOST: postgres
     ports:
+    GITHUB_TOKEN: ${GITHUB_TOKEN}
+      GITHUB_REPO: ${GITHUB_REPO}
+      GITHUB_BRANCH: ${GITHUB_BRANCH}
       - "3000:3003"
-    volumes:
-      - ./uploads:/app/uploads  # 挂载上传目录，持久化图片文件
     depends_on:
       postgres:
         condition: service_healthy

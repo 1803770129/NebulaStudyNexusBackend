@@ -1,22 +1,13 @@
-/**
- * 图片上传控制器
- */
 import {
   Controller,
   Post,
-  Get,
-  Param,
-  Res,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
-  NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { Response } from 'express';
 import { UploadService } from './upload.service';
-import { Public } from '@/common/decorators/public.decorator';
 import { Multer } from 'multer';
 
 @ApiTags('upload')
@@ -26,7 +17,7 @@ export class UploadController {
 
   @Post('image')
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: '上传图片' })
+  @ApiOperation({ summary: '上传图片到 GitHub' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -54,19 +45,5 @@ export class UploadController {
       file.mimetype,
       file.size,
     );
-  }
-
-  @Public()
-  @Get('images/:filename')
-  @ApiOperation({ summary: '获取图片' })
-  @ApiResponse({ status: 200, description: '获取成功' })
-  @ApiResponse({ status: 404, description: '图片不存在' })
-  async getImage(@Param('filename') filename: string, @Res() res: Response) {
-    if (!this.uploadService.imageExists(filename)) {
-      throw new NotFoundException('图片不存在');
-    }
-
-    const filepath = this.uploadService.getImagePath(filename);
-    res.sendFile(filepath);
   }
 }
