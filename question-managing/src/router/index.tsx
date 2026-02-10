@@ -18,6 +18,7 @@ const QuestionListPage = lazy(() => import('@/pages/QuestionList'))
 const QuestionFormPage = lazy(() => import('@/pages/QuestionForm'))
 const CategoryManagePage = lazy(() => import('@/pages/CategoryManage'))
 const TagManagePage = lazy(() => import('@/pages/TagManage'))
+const KnowledgePointManage = lazy(() => import('@/pages/KnowledgePointManage'))
 
 // 加载中组件
 const Loading = () => (
@@ -77,6 +78,10 @@ export const router = createBrowserRouter([
       {
         path: 'tags',
         element: withSuspense(TagManagePage),
+      },
+      {
+        path: 'knowledge-points',
+        element: withSuspense(KnowledgePointManage),
       },
     ],
   },

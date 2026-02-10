@@ -64,4 +64,18 @@ export const queryKeys = {
     lists: () => [...queryKeys.tags.all, 'list'] as const,
     detail: (id: string) => [...queryKeys.tags.all, 'detail', id] as const,
   },
+  // 知识点相关
+  knowledgePoints: {
+    all: ['knowledgePoints'] as const,
+    lists: () => [...queryKeys.knowledgePoints.all, 'list'] as const,
+    list: (filters: Record<string, unknown>) =>
+      [...queryKeys.knowledgePoints.lists(), filters] as const,
+    tree: (categoryId?: string) =>
+      categoryId
+        ? [...queryKeys.knowledgePoints.all, 'tree', categoryId] as const
+        : [...queryKeys.knowledgePoints.all, 'tree'] as const,
+    details: () => [...queryKeys.knowledgePoints.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.knowledgePoints.details(), id] as const,
+    questions: (id: string) => [...queryKeys.knowledgePoints.detail(id), 'questions'] as const,
+  },
 } as const

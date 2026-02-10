@@ -17,6 +17,7 @@ import { DifficultyLevel } from '../enums/difficulty-level.enum';
 import { Category } from '@/modules/category/entities/category.entity';
 import { Tag } from '@/modules/tag/entities/tag.entity';
 import { User } from '@/modules/user/entities/user.entity';
+import { KnowledgePoint } from '@/modules/knowledge-point/entities/knowledge-point.entity';
 
 /**
  * 富文本内容结构
@@ -74,6 +75,14 @@ export class Question {
     inverseJoinColumn: { name: 'tagId', referencedColumnName: 'id' },
   })
   tags: Tag[];
+
+  @ManyToMany(() => KnowledgePoint, { cascade: true })
+  @JoinTable({
+    name: 'question_knowledge_points',
+    joinColumn: { name: 'questionId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'knowledgePointId', referencedColumnName: 'id' },
+  })
+  knowledgePoints: KnowledgePoint[];
 
   @Column('jsonb', { nullable: true })
   options: Option[];

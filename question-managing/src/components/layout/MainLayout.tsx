@@ -17,6 +17,7 @@ import {
   HomeOutlined,
   UserOutlined,
   LogoutOutlined,
+  BookOutlined,
 } from '@ant-design/icons'
 import { useUIStore } from '@/stores'
 import { useAuth } from '@/hooks/useAuth'
@@ -36,6 +37,11 @@ const menuItems = [
     key: '/questions',
     icon: <FileTextOutlined />,
     label: '题目管理',
+  },
+  {
+    key: '/knowledge-points',
+    icon: <BookOutlined />,
+    label: '知识点管理',
   },
   {
     key: '/categories',

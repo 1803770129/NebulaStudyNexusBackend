@@ -45,6 +45,16 @@
   margin: 4px 0;
 }
 
+.rich-text-editor-content .tiptap a {
+  color: #1890ff;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.rich-text-editor-content .tiptap a:hover {
+  color: #40a9ff;
+}
+
 .rich-text-editor-content .tiptap .latex-formula {
   background-color: #f0f5ff;
   padding: 2px 6px;

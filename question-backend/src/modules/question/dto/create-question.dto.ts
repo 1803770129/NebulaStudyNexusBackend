@@ -49,6 +49,11 @@ export class CreateQuestionDto {
   @IsOptional()
   tagIds?: string[];
 
+  @ApiPropertyOptional({ description: '知识点 ID 列表', type: [String] })
+  @IsOptional()
+  @IsUUID('4', { each: true, message: '知识点ID格式不正确' })
+  knowledgePointIds?: string[];
+
   @ApiPropertyOptional({ description: '选项列表（选择题必填）', type: [OptionDto] })
   @IsArray()
   @ValidateNested({ each: true })

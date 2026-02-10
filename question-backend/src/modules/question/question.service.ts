@@ -10,6 +10,7 @@ import { OptionDto } from './dto/option.dto';
 import { CategoryService } from '@/modules/category/category.service';
 import { TagService } from '@/modules/tag/tag.service';
 import { ContentService } from '@/modules/content/content.service';
+import { KnowledgePointService } from '@/modules/knowledge-point/knowledge-point.service';
 import { PaginationResponseDto } from '@/common/dto/pagination-response.dto';
 
 @Injectable()
@@ -20,6 +21,7 @@ export class QuestionService {
     private readonly categoryService: CategoryService,
     private readonly tagService: TagService,
     private readonly contentService: ContentService,
+    private readonly knowledgePointService: KnowledgePointService,
   ) {}
 
   /**
@@ -46,13 +48,18 @@ export class QuestionService {
    * 创建题目
    */
   async create(createQuestionDto: CreateQuestionDto, creatorId: string): Promise<Question> {
-    const { tagIds, categoryId, content, explanation, options, ...questionData } = createQuestionDto;
+    const { tagIds, categoryId, knowledgePointIds, content, explanation, options, ...questionData } = createQuestionDto;
 
     // 验证分类存在
     await this.categoryService.findById(categoryId);
 
     // 获取标签
     const tags = tagIds ? await this.tagService.findByIds(tagIds) : [];
+
+    // 获取知识点
+    const knowledgePoints = knowledgePointIds 
+      ? await this.knowledgePointService.findByIds(knowledgePointIds) 
+      : [];
 
     // 处理富文本内容
     const processedContent = await this.contentService.processContent(content);
@@ -69,6 +76,7 @@ export class QuestionService {
       options: processedOptions,
       categoryId,
       tags,
+      knowledgePoints,
       creatorId,
     });
 
@@ -79,6 +87,9 @@ export class QuestionService {
     if (tagIds && tagIds.length > 0) {
       await this.tagService.updateQuestionCounts(tagIds, 1);
     }
+    if (knowledgePointIds && knowledgePointIds.length > 0) {
+      await this.knowledgePointService.updateQuestionCounts(knowledgePointIds, 1);
+    }
 
     return savedQuestion;
   }
@@ -87,12 +98,13 @@ export class QuestionService {
    * 分页查询题目（返回 rendered 内容用于展示）
    */
   async findAll(queryDto: QueryQuestionDto): Promise<PaginationResponseDto<Question>> {
-    const { page = 1, pageSize = 10, keyword, categoryId, type, difficulty, tagIds } = queryDto;
+    const { page = 1, pageSize = 10, keyword, categoryId, type, difficulty, tagIds, knowledgePointIds } = queryDto;
 
     const queryBuilder = this.questionRepository
       .createQueryBuilder('question')
       .leftJoinAndSelect('question.category', 'category')
       .leftJoinAndSelect('question.tags', 'tag')
+      .leftJoinAndSelect('question.knowledgePoints', 'knowledgePoints')
       .leftJoinAndSelect('question.creator', 'creator');
 
     // 关键词搜索（搜索 raw 内容）
@@ -131,6 +143,12 @@ export class QuestionService {
       }).setParameter('tagIds', tagIds);
     }
 
+    // 知识点筛选
+    if (knowledgePointIds && knowledgePointIds.length > 0) {
+      queryBuilder.innerJoin('question.knowledgePoints', 'kp')
+        .andWhere('kp.id IN (:...knowledgePointIds)', { knowledgePointIds });
+    }
+
     // 排序
     queryBuilder.orderBy('question.createdAt', 'DESC');
 
@@ -150,7 +168,7 @@ export class QuestionService {
   async findById(id: string): Promise<Question> {
     const question = await this.questionRepository.findOne({
       where: { id },
-      relations: ['category', 'tags', 'creator'],
+      relations: ['category', 'tags', 'knowledgePoints', 'creator'],
     });
 
     if (!question) {
@@ -172,7 +190,7 @@ export class QuestionService {
    */
   async update(id: string, updateQuestionDto: UpdateQuestionDto): Promise<Question> {
     const question = await this.findById(id);
-    const { tagIds, categoryId, content, explanation, options, ...updateData } = updateQuestionDto;
+    const { tagIds, categoryId, knowledgePointIds, content, explanation, options, ...updateData } = updateQuestionDto;
 
     // 如果更改分类
     if (categoryId && categoryId !== question.categoryId) {
@@ -199,6 +217,25 @@ export class QuestionService {
       }
 
       question.tags = newTags;
+    }
+
+    // 如果更改知识点
+    if (knowledgePointIds !== undefined) {
+      const oldKpIds = question.knowledgePoints.map((kp) => kp.id);
+      const newKnowledgePoints = await this.knowledgePointService.findByIds(knowledgePointIds);
+
+      // 更新知识点计数
+      const removedKpIds = oldKpIds.filter((id) => !knowledgePointIds.includes(id));
+      const addedKpIds = knowledgePointIds.filter((id) => !oldKpIds.includes(id));
+
+      if (removedKpIds.length > 0) {
+        await this.knowledgePointService.updateQuestionCounts(removedKpIds, -1);
+      }
+      if (addedKpIds.length > 0) {
+        await this.knowledgePointService.updateQuestionCounts(addedKpIds, 1);
+      }
+
+      question.knowledgePoints = newKnowledgePoints;
     }
 
     // 处理富文本内容
@@ -233,6 +270,12 @@ export class QuestionService {
     const tagIds = question.tags.map((t) => t.id);
     if (tagIds.length > 0) {
       await this.tagService.updateQuestionCounts(tagIds, -1);
+    }
+
+    // 更新知识点的题目数量
+    const kpIds = question.knowledgePoints.map((kp) => kp.id);
+    if (kpIds.length > 0) {
+      await this.knowledgePointService.updateQuestionCounts(kpIds, -1);
     }
 
     await this.questionRepository.remove(question);

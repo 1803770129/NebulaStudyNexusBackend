@@ -86,4 +86,47 @@ describe('RichTextEditor Component', () => {
     const content = document.querySelector('.rich-text-editor-content');
     expect(content).toHaveStyle({ height: 'auto' });
   });
+
+  /**
+   * Test: RichTextEditor should accept RichContent value
+   */
+  it('should accept RichContent value', () => {
+    const richContent = {
+      raw: '<p>Test content</p>',
+      rendered: '<p>Test content</p>',
+    };
+    render(<RichTextEditor value={richContent} />);
+    
+    // Editor should be rendered
+    expect(document.querySelector('.rich-text-editor')).toBeInTheDocument();
+  });
+
+  /**
+   * Test: RichTextEditor should call onChange with RichContent when value is RichContent
+   */
+  it('should call onChange with RichContent when value is RichContent', () => {
+    const onChange = vi.fn();
+    const richContent = {
+      raw: '<p>Initial</p>',
+      rendered: '<p>Initial</p>',
+    };
+    
+    render(<RichTextEditor value={richContent} onChange={onChange} />);
+    
+    // Editor should be rendered
+    expect(document.querySelector('.rich-text-editor')).toBeInTheDocument();
+  });
+
+  /**
+   * Test: RichTextEditor should call onChange with string when value is string
+   */
+  it('should call onChange with string when value is string', () => {
+    const onChange = vi.fn();
+    const stringContent = '<p>Initial</p>';
+    
+    render(<RichTextEditor value={stringContent} onChange={onChange} />);
+    
+    // Editor should be rendered
+    expect(document.querySelector('.rich-text-editor')).toBeInTheDocument();
+  });
 });

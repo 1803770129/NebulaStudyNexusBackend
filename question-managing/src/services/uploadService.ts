@@ -2,12 +2,14 @@
  * 图片上传服务
  * 
  * 提供图片上传功能，与后端 API 交互
+ * 后端使用 GitHub + jsDelivr CDN 存储图片
  * 
  * 学习要点：
  * 1. 文件上传的处理方式（FormData）
  * 2. 上传进度的监控
  * 3. 文件验证（类型、大小）
  * 4. 错误处理
+ * 5. CDN URL 的处理
  */
 
 import { getApiClient, ApiError } from '@/lib/apiClient';
@@ -231,10 +233,21 @@ export async function uploadImages(
 /**
  * 获取图片 URL
  * 
- * 将相对路径转换为完整 URL
+ * 支持两种格式：
+ * 1. CDN 完整 URL（GitHub 图床）：直接返回
+ * 2. 相对路径（旧数据兼容）：拼接 baseUrl
  * 
- * @param filename - 文件名或相对路径
+ * @param filename - 文件名、相对路径或完整 URL
  * @returns 完整的图片 URL
+ * 
+ * @example
+ * // CDN URL
+ * getImageUrl('https://cdn.jsdelivr.net/gh/user/repo@main/images/abc.jpg')
+ * // => 'https://cdn.jsdelivr.net/gh/user/repo@main/images/abc.jpg'
+ * 
+ * // 相对路径（兼容旧数据）
+ * getImageUrl('/api/upload/images/abc.jpg')
+ * // => 'http://localhost:3000/api/upload/images/abc.jpg'
  */
 export function getImageUrl(filename: string): string {
   // 如果已经是完整 URL，直接返回
@@ -245,4 +258,25 @@ export function getImageUrl(filename: string): string {
   // 构建完整 URL
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
   return `${baseUrl}/upload/images/${filename}`;
+}
+
+/**
+ * 判断是否为 CDN URL
+ * 
+ * @param url - 图片 URL
+ * @returns 是否为 CDN URL
+ */
+export function isCdnUrl(url: string): boolean {
+  return url.startsWith('https://cdn.jsdelivr.net/') || 
+         url.startsWith('http://cdn.jsdelivr.net/');
+}
+
+/**
+ * 判断是否为完整 URL
+ * 
+ * @param url - 图片 URL
+ * @returns 是否为完整 URL
+ */
+export function isFullUrl(url: string): boolean {
+  return url.startsWith('http://') || url.startsWith('https://');
 }

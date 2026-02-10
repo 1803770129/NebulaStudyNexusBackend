@@ -28,10 +28,10 @@ services:
       - .env
     environment:
       DB_HOST: postgres
-    ports:
-    GITHUB_TOKEN: ${GITHUB_TOKEN}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
       GITHUB_REPO: ${GITHUB_REPO}
       GITHUB_BRANCH: ${GITHUB_BRANCH}
+    ports:
       - "3000:3003"
     depends_on:
       postgres:

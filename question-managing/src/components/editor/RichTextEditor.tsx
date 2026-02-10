@@ -2,7 +2,8 @@ import { useCallback, useState, forwardRef, useImperativeHandle, useEffect } fro
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
-import { Button, Space, Tooltip, Upload, message } from 'antd';
+import Link from '@tiptap/extension-link';
+import { Button, Space, Tooltip, Upload, message, Modal, Input } from 'antd';
 import {
   BoldOutlined,
   ItalicOutlined,
@@ -13,6 +14,8 @@ import {
   FunctionOutlined,
   UndoOutlined,
   RedoOutlined,
+  LinkOutlined,
+  ClearOutlined,
 } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
 import 'katex/dist/katex.min.css';
@@ -43,9 +46,14 @@ const convertImageUrls = (html: string): string => {
   );
 };
 
+export interface RichContent {
+  raw: string;
+  rendered: string;
+}
+
 export interface RichTextEditorProps {
-  value?: string;
-  onChange?: (content: string) => void;
+  value?: string | RichContent;
+  onChange?: (content: string | RichContent) => void;
   placeholder?: string;
   readonly?: boolean;
   height?: number | string;
@@ -65,6 +73,21 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
     const [imageEditVisible, setImageEditVisible] = useState(false);
     const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
+    const [linkDialogVisible, setLinkDialogVisible] = useState(false);
+    const [linkUrl, setLinkUrl] = useState('');
+    const [linkText, setLinkText] = useState('');
+
+    // Helper function to extract raw content from value
+    const getRawContent = (val: string | RichContent | undefined): string => {
+      if (!val) return '';
+      if (typeof val === 'string') return val;
+      return val.raw || '';
+    };
+
+    // Helper function to check if value is RichContent
+    const isRichContent = (val: unknown): val is RichContent => {
+      return typeof val === 'object' && val !== null && 'raw' in val && 'rendered' in val;
+    };
 
     const editor = useEditor({
       extensions: [
@@ -75,25 +98,45 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           horizontalRule: simple ? false : undefined,
         }),
         Image.configure({ inline: true, allowBase64: true }),
+        Link.configure({
+          openOnClick: false,
+          HTMLAttributes: {
+            target: '_blank',
+            rel: 'noopener noreferrer',
+          },
+        }),
         LatexExtension,
       ],
       content: '',
       editable: !readonly,
       immediatelyRender: false,
       onUpdate: ({ editor }) => {
-        onChange?.(editor.getHTML());
+        const html = editor.getHTML();
+        // If the original value was RichContent, return RichContent
+        if (isRichContent(value)) {
+          onChange?.({
+            raw: html,
+            rendered: html, // For now, raw and rendered are the same
+          });
+        } else {
+          // Otherwise, return string for backward compatibility
+          onChange?.(html);
+        }
       },
     });
 
     useEffect(() => {
-      if (editor && value !== undefined && value !== '') {
-        if (!editor.isDestroyed) {
-          const processedValue = convertImageUrls(value);
-          const currentContent = editor.getHTML();
-          const normalizedCurrent = currentContent === '<p></p>' ? '' : currentContent;
-          const normalizedValue = processedValue === '<p></p>' ? '' : processedValue;
-          if (normalizedValue && normalizedValue !== normalizedCurrent) {
-            editor.commands.setContent(processedValue);
+      if (editor && value !== undefined) {
+        const rawContent = getRawContent(value);
+        if (rawContent !== '') {
+          if (!editor.isDestroyed) {
+            const processedValue = convertImageUrls(rawContent);
+            const currentContent = editor.getHTML();
+            const normalizedCurrent = currentContent === '<p></p>' ? '' : currentContent;
+            const normalizedValue = processedValue === '<p></p>' ? '' : processedValue;
+            if (normalizedValue && normalizedValue !== normalizedCurrent) {
+              editor.commands.setContent(processedValue);
+            }
           }
         }
       }
@@ -167,6 +210,41 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       setFormulaDialogVisible(false);
     }, [editor]);
 
+    const handleLinkInsert = useCallback(() => {
+      if (editor) {
+        const { from, to } = editor.state.selection;
+        const selectedText = editor.state.doc.textBetween(from, to, '');
+        setLinkText(selectedText);
+        setLinkUrl('');
+        setLinkDialogVisible(true);
+      }
+    }, [editor]);
+
+    const handleLinkConfirm = useCallback(() => {
+      if (editor && linkUrl) {
+        if (linkText) {
+          // Insert new link with text
+          editor.chain().focus().insertContent({
+            type: 'text',
+            text: linkText,
+            marks: [{ type: 'link', attrs: { href: linkUrl } }],
+          }).run();
+        } else {
+          // Set link on selected text
+          editor.chain().focus().setLink({ href: linkUrl }).run();
+        }
+      }
+      setLinkDialogVisible(false);
+      setLinkUrl('');
+      setLinkText('');
+    }, [editor, linkUrl, linkText]);
+
+    const handleClearFormat = useCallback(() => {
+      if (editor) {
+        editor.chain().focus().clearNodes().unsetAllMarks().run();
+      }
+    }, [editor]);
+
     if (!editor) {
       return null;
     }
@@ -190,6 +268,14 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
             size="small"
           />
         </Tooltip>
+        <Tooltip title="插入链接">
+          <Button
+            type={editor.isActive('link') ? 'primary' : 'text'}
+            icon={<LinkOutlined />}
+            onClick={handleLinkInsert}
+            size="small"
+          />
+        </Tooltip>
         <Upload {...uploadProps}>
           <Tooltip title="插入图片">
             <Button type="text" icon={<PictureOutlined />} loading={uploading} size="small" />
@@ -200,6 +286,14 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
             type="text"
             icon={<FunctionOutlined />}
             onClick={() => setFormulaDialogVisible(true)}
+            size="small"
+          />
+        </Tooltip>
+        <Tooltip title="清除格式">
+          <Button
+            type="text"
+            icon={<ClearOutlined />}
+            onClick={handleClearFormat}
             size="small"
           />
         </Tooltip>
@@ -220,9 +314,9 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
             onClick={() => editor.chain().focus().toggleItalic().run()}
           />
         </Tooltip>
-        <Tooltip title="下划线">
+        <Tooltip title="删除线">
           <Button
-            type={editor.isActive('underline') ? 'primary' : 'text'}
+            type={editor.isActive('strike') ? 'primary' : 'text'}
             icon={<UnderlineOutlined />}
             onClick={() => editor.chain().focus().toggleStrike().run()}
           />
@@ -243,6 +337,13 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           />
         </Tooltip>
         <div style={{ borderLeft: '1px solid #d9d9d9', height: 20, margin: '0 4px' }} />
+        <Tooltip title="插入链接">
+          <Button
+            type={editor.isActive('link') ? 'primary' : 'text'}
+            icon={<LinkOutlined />}
+            onClick={handleLinkInsert}
+          />
+        </Tooltip>
         <Upload {...uploadProps}>
           <Tooltip title="插入图片">
             <Button type="text" icon={<PictureOutlined />} loading={uploading} />
@@ -256,6 +357,13 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           />
         </Tooltip>
         <div style={{ borderLeft: '1px solid #d9d9d9', height: 20, margin: '0 4px' }} />
+        <Tooltip title="清除格式">
+          <Button
+            type="text"
+            icon={<ClearOutlined />}
+            onClick={handleClearFormat}
+          />
+        </Tooltip>
         <Tooltip title="撤销">
           <Button
             type="text"
@@ -299,6 +407,37 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           onConfirm={handleImageEditConfirm}
           onCancel={handleImageEditCancel}
         />
+        <Modal
+          title="插入链接"
+          open={linkDialogVisible}
+          onOk={handleLinkConfirm}
+          onCancel={() => {
+            setLinkDialogVisible(false);
+            setLinkUrl('');
+            setLinkText('');
+          }}
+          okText="确定"
+          cancelText="取消"
+        >
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <div>
+              <div style={{ marginBottom: 8 }}>链接文本：</div>
+              <Input
+                placeholder="请输入链接文本（可选）"
+                value={linkText}
+                onChange={(e) => setLinkText(e.target.value)}
+              />
+            </div>
+            <div>
+              <div style={{ marginBottom: 8 }}>链接地址：</div>
+              <Input
+                placeholder="请输入链接地址，如：https://example.com"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+              />
+            </div>
+          </Space>
+        </Modal>
       </div>
     );
   }

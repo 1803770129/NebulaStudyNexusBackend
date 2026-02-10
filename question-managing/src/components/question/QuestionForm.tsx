@@ -2,21 +2,24 @@
  * 题目表单组件
  */
 
-import { useEffect } from 'react'
-import { Form, Input, Select, Button, Space, Divider, Card } from 'antd'
-import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons'
-import type { Question, Category, Tag, QuestionFormValues, FormOption } from '@/types'
+import { useEffect, useState } from 'react'
+import { Form, Input, Select, Button, Space, Divider, Card, Tag } from 'antd'
+import { PlusOutlined, MinusCircleOutlined, MobileOutlined, CloseOutlined } from '@ant-design/icons'
+import type { Question, Category, Tag as TagType, QuestionFormValues, FormOption } from '@/types'
 import { QuestionType, DifficultyLevel, getRawContent } from '@/types'
 import { QUESTION_TYPE_OPTIONS, DIFFICULTY_OPTIONS } from '@/constants'
 import { generateShortId } from '@/utils/id'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
+import { MobilePreview } from './MobilePreview'
+import { KnowledgePointSelector } from '@/components/knowledge-point/KnowledgePointSelector'
+import { knowledgePointService } from '@/services/knowledgePointService'
 
 const { TextArea } = Input
 
 interface QuestionFormProps {
   initialValues?: Question
   categories: Category[]
-  tags: Tag[]
+  tags: TagType[]
   onSubmit: (values: QuestionFormValues) => Promise<void>
   onCancel: () => void
   loading?: boolean
@@ -32,6 +35,10 @@ export function QuestionForm({
 }: QuestionFormProps) {
   const [form] = Form.useForm()
   const questionType = Form.useWatch('type', form)
+  const categoryId = Form.useWatch('categoryId', form)
+  const knowledgePointIds = Form.useWatch('knowledgePointIds', form)
+  const [previewVisible, setPreviewVisible] = useState(false)
+  const [knowledgePointNames, setKnowledgePointNames] = useState<Record<string, string>>({})
 
   // 初始化表单值
   useEffect(() => {
@@ -44,6 +51,7 @@ export function QuestionForm({
         difficulty: initialValues.difficulty,
         categoryId: initialValues.categoryId,
         tagIds: initialValues.tagIds || [],
+        knowledgePointIds: initialValues.knowledgePointIds || [],
         options: initialValues.options?.map(opt => ({
           id: opt.id,
           content: getRawContent(opt.content),
@@ -57,6 +65,7 @@ export function QuestionForm({
         type: QuestionType.SINGLE_CHOICE,
         difficulty: DifficultyLevel.EASY,
         tagIds: [],
+        knowledgePointIds: [],
         options: [
           { id: generateShortId(), content: '', isCorrect: false },
           { id: generateShortId(), content: '', isCorrect: false },
@@ -65,12 +74,40 @@ export function QuestionForm({
     }
   }, [initialValues, form])
 
+  // 加载知识点名称（用于显示已选知识点）
+  useEffect(() => {
+    if (knowledgePointIds && knowledgePointIds.length > 0) {
+      const loadKnowledgePointNames = async () => {
+        try {
+          const kps = await knowledgePointService.findByIds(knowledgePointIds)
+          const names: Record<string, string> = {}
+          kps.forEach(kp => {
+            names[kp.id] = kp.name
+          })
+          setKnowledgePointNames(names)
+        } catch (error) {
+          console.error('加载知识点名称失败', error)
+        }
+      }
+      loadKnowledgePointNames()
+    } else {
+      setKnowledgePointNames({})
+    }
+  }, [knowledgePointIds])
+
   // 是否是选择题
   const isChoiceQuestion = [
     QuestionType.SINGLE_CHOICE,
     QuestionType.MULTIPLE_CHOICE,
     QuestionType.TRUE_FALSE,
   ].includes(questionType)
+
+  // 移除知识点
+  const handleRemoveKnowledgePoint = (kpId: string) => {
+    const currentIds = form.getFieldValue('knowledgePointIds') || []
+    const newIds = currentIds.filter((id: string) => id !== kpId)
+    form.setFieldsValue({ knowledgePointIds: newIds })
+  }
 
   // 处理提交
   const handleSubmit = async () => {
@@ -138,7 +175,7 @@ export function QuestionForm({
       >
         <RichTextEditor
           placeholder="请输入题目内容/题干"
-          height={200}
+          height={300}
         />
       </Form.Item>
 
@@ -199,6 +236,35 @@ export function QuestionForm({
           />
         </Form.Item>
       </Space>
+
+      {/* 知识点选择器 */}
+      <Form.Item
+        name="knowledgePointIds"
+        label="知识点"
+        tooltip="选择该题目考察的知识点，可多选"
+        extra="可以选择多个知识点来标记题目考察的知识点"
+        dependencies={['categoryId']}
+      >
+        <KnowledgePointSelector categoryId={categoryId} />
+      </Form.Item>
+
+      {/* 显示已选知识点列表 */}
+      {knowledgePointIds && knowledgePointIds.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <Space wrap>
+            {knowledgePointIds.map((kpId: string) => (
+              <Tag
+                key={kpId}
+                closable
+                onClose={() => handleRemoveKnowledgePoint(kpId)}
+                icon={<CloseOutlined />}
+              >
+                {knowledgePointNames[kpId] || kpId}
+              </Tag>
+            ))}
+          </Space>
+        </div>
+      )}
 
       {/* 选择题选项 */}
       {isChoiceQuestion && (
@@ -293,7 +359,7 @@ export function QuestionForm({
       <Form.Item name="explanation" label="答案解析">
         <RichTextEditor
           placeholder="请输入答案解析（可选）"
-          height={150}
+          height={250}
         />
       </Form.Item>
 
@@ -305,8 +371,21 @@ export function QuestionForm({
             {initialValues ? '保存修改' : '创建题目'}
           </Button>
           <Button onClick={onCancel}>取消</Button>
+          <Button 
+            icon={<MobileOutlined />} 
+            onClick={() => setPreviewVisible(true)}
+          >
+            移动端预览
+          </Button>
         </Space>
       </Form.Item>
+
+      {/* 移动端预览弹窗 */}
+      <MobilePreview
+        visible={previewVisible}
+        onClose={() => setPreviewVisible(false)}
+        formValues={form.getFieldsValue()}
+      />
     </Form>
   )
 }

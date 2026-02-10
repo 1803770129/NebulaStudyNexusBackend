@@ -86,6 +86,8 @@ export interface Question {
   categoryId: string
   /** 关联的标签ID列表 */
   tagIds: string[]
+  /** 关联的知识点ID列表 */
+  knowledgePointIds?: string[]
   /** 选择题选项（仅选择题有此字段） */
   options?: Option[]
   /** 答案（字符串或字符串数组） */
@@ -157,6 +159,8 @@ export interface QuestionFilters {
   difficulty?: DifficultyLevel
   /** 标签ID列表筛选 */
   tagIds?: string[]
+  /** 知识点ID列表筛选 */
+  knowledgePointIds?: string[]
   /** 当前页码 */
   page: number
   /** 每页数量 */
@@ -204,6 +208,8 @@ export interface QuestionFormValues {
   difficulty: DifficultyLevel
   categoryId: string
   tagIds: string[]
+  /** 知识点 ID 列表 */
+  knowledgePointIds?: string[]
   /** 选项（使用原始 HTML） */
   options?: FormOption[]
   answer: string | string[]

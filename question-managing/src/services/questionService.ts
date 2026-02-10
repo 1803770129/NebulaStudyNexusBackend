@@ -95,6 +95,7 @@ interface CreateQuestionRequest {
   difficulty: Question['difficulty'];
   categoryId: string;
   tagIds?: string[];
+  knowledgePointIds?: string[];
   options?: RequestOption[];
   answer: string | string[];
   explanation?: string;
@@ -113,6 +114,7 @@ interface QueryQuestionParams {
   type?: Question['type'];
   difficulty?: Question['difficulty'];
   tagIds?: string[];
+  knowledgePointIds?: string[];
 }
 
 // ==================== 数据转换函数 ====================
@@ -174,6 +176,7 @@ function convertFormValuesToRequest(data: QuestionFormValues): CreateQuestionReq
     difficulty: data.difficulty,
     categoryId: data.categoryId,
     tagIds: data.tagIds,
+    knowledgePointIds: data.knowledgePointIds,
     options: data.options?.map(convertFormOptionToRequest),
     answer: data.answer,
     explanation: data.explanation,
@@ -203,6 +206,7 @@ export function convertQuestionToFormValues(question: Question): QuestionFormVal
     difficulty: question.difficulty,
     categoryId: question.categoryId,
     tagIds: question.tagIds,
+    knowledgePointIds: question.knowledgePointIds,
     options: convertStorageOptionsToForm(question.options as Option[]),
     answer: question.answer,
     explanation: getRawContent(question.explanation),
@@ -256,6 +260,9 @@ export async function getQuestions(
   }
   if (filters.tagIds && filters.tagIds.length > 0) {
     params.tagIds = filters.tagIds;
+  }
+  if (filters.knowledgePointIds && filters.knowledgePointIds.length > 0) {
+    params.knowledgePointIds = filters.knowledgePointIds;
   }
   
   // 调用 API，后端返回 { statusCode, message, data: { data, total, page, pageSize } }

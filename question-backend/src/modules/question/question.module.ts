@@ -9,6 +9,7 @@ import { QuestionController } from './question.controller';
 import { CategoryModule } from '@/modules/category/category.module';
 import { TagModule } from '@/modules/tag/tag.module';
 import { ContentModule } from '@/modules/content/content.module';
+import { KnowledgePointModule } from '@/modules/knowledge-point/knowledge-point.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ContentModule } from '@/modules/content/content.module';
     CategoryModule,
     TagModule,
     ContentModule,
+    KnowledgePointModule,
   ],
   controllers: [QuestionController],
   providers: [QuestionService],

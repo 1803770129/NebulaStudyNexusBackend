@@ -35,4 +35,11 @@ export class QueryQuestionDto extends PaginationQueryDto {
   @Transform(({ value }) => (typeof value === 'string' ? [value] : value))
   @IsOptional()
   tagIds?: string[];
+
+  @ApiPropertyOptional({ description: '知识点ID列表', type: [String] })
+  @IsArray()
+  @IsUUID('4', { each: true, message: '知识点ID格式不正确' })
+  @Transform(({ value }) => (typeof value === 'string' ? [value] : value))
+  @IsOptional()
+  knowledgePointIds?: string[];
 }
