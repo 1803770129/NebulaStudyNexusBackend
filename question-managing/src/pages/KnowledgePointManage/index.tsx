@@ -214,7 +214,7 @@ export function KnowledgePointManagePage() {
           <div style={{ padding: '0 16px 16px' }}>
             {isLoadingTree ? (
               <div style={{ textAlign: 'center', padding: 40 }}>
-                <Spin tip="加载中..." />
+                <Spin />
               </div>
             ) : treeData.length > 0 ? (
               <Tree

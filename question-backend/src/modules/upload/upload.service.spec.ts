@@ -5,12 +5,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
 import { UploadService } from './upload.service';
+import { CDNService } from './cdn/cdn.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
 describe('UploadService', () => {
   let service: UploadService;
   let configService: ConfigService;
+  let cdnService: CDNService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -22,11 +24,33 @@ describe('UploadService', () => {
             get: jest.fn().mockReturnValue('api'),
           },
         },
+        {
+          provide: CDNService,
+          useValue: {
+            generateFallbackURLs: jest.fn().mockReturnValue({
+              filename: 'test.jpg',
+              urls: [
+                'https://cdn.statically.io/gh/test/repo@main/images/test.jpg',
+                'https://raw.githubusercontent.com/test/repo/main/images/test.jpg',
+                '/api/upload/proxy/test.jpg',
+              ],
+              primary: 'https://cdn.statically.io/gh/test/repo@main/images/test.jpg',
+            }),
+            generateStaticallyURL: jest.fn().mockReturnValue(
+              'https://cdn.statically.io/gh/test/repo@main/images/test.jpg',
+            ),
+            generateGitHubRawURL: jest.fn().mockReturnValue(
+              'https://raw.githubusercontent.com/test/repo/main/images/test.jpg',
+            ),
+            generateProxyURL: jest.fn().mockReturnValue('/api/upload/proxy/test.jpg'),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<UploadService>(UploadService);
     configService = module.get<ConfigService>(ConfigService);
+    cdnService = module.get<CDNService>(CDNService);
   });
 
   afterEach(() => {

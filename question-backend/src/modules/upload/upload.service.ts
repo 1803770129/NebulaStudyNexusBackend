@@ -4,22 +4,15 @@
  * 职责：
  * 1. 验证文件类型和大小
  * 2. 上传文件到 GitHub 仓库
- * 3. 返回 jsDelivr CDN 访问 URL
+ * 3. 返回所有降级 URL（Statically、GitHub Raw、Proxy）
  */
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-
-export interface UploadResult {
-  /** 文件访问 URL */
-  url: string;
-  /** 文件名 */
-  filename: string;
-  /** 文件大小 */
-  size: number;
-}
+import { CDNService } from './cdn/cdn.service';
+import { UploadResponse } from './cdn/interfaces';
 
 @Injectable()
 export class UploadService {
@@ -39,7 +32,10 @@ export class UploadService {
   private readonly githubRepo: string;
   private readonly githubBranch: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly cdnService: CDNService,
+  ) {
     this.githubToken = this.configService.get<string>('github.token');
     this.githubRepo = this.configService.get<string>('github.repo');
     this.githubBranch = this.configService.get<string>('github.branch');
@@ -76,14 +72,14 @@ export class UploadService {
    * @param originalname 原始文件名
    * @param mimetype 文件类型
    * @param size 文件大小
-   * @returns 上传结果
+   * @returns 上传结果（包含所有降级 URL）
    */
    async uploadImage(
     file: Buffer,
     originalname: string,
     mimetype: string,
     size: number,
-  ): Promise<UploadResult> {
+  ): Promise<UploadResponse> {
     // 验证文件
     const validationError = this.getValidationError({ mimetype, size });
     if (validationError) {
@@ -97,7 +93,7 @@ export class UploadService {
 
     try {
       // 上传到 GitHub
-      const response = await axios.put(
+      await axios.put(
         `https://api.github.com/repos/${this.githubRepo}/contents/${filePath}`,
         {
           message: `Upload ${filename}`,
@@ -112,13 +108,21 @@ export class UploadService {
         },
       );
 
-      // 使用 jsDelivr CDN 加速
-      const cdnUrl = `https://cdn.jsdelivr.net/gh/${this.githubRepo}@${this.githubBranch}/${filePath}`;
+      // 生成所有降级 URL
+      const fallbackURLs = this.cdnService.generateFallbackURLs(filename);
 
+      // 返回增强的响应，包含所有降级 URL
       return {
-        url: cdnUrl,
+        success: true,
         filename,
+        url: fallbackURLs.primary, // 主 URL（向后兼容）
+        urls: {
+          statically: this.cdnService.generateStaticallyURL(filename),
+          github: this.cdnService.generateGitHubRawURL(filename),
+          proxy: this.cdnService.generateProxyURL(filename),
+        },
         size,
+        uploadedAt: new Date().toISOString(),
       };
     } catch (error) {
       if (error.response) {

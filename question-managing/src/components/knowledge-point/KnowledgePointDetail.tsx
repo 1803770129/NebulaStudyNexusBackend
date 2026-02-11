@@ -11,6 +11,8 @@ import { EditOutlined, DeleteOutlined, BookOutlined, FileTextOutlined } from '@a
 const { Title } = Typography
 import { useKnowledgePoint } from '@/hooks/useKnowledgePoint'
 import type { KnowledgePoint } from '@/services/knowledgePointService'
+import { convertImageUrls } from '@/utils/imageUrlHelper'
+import './KnowledgePointContent.css'
 
 interface KnowledgePointDetailProps {
   /** 知识点 ID */
@@ -18,7 +20,7 @@ interface KnowledgePointDetailProps {
   /** 编辑回调 */
   onEdit: (kp: KnowledgePoint) => void
   /** 删除回调 */
-  onDelete: (id: string) => void
+  onDelete: (id: string) => Promise<void> | void
 }
 
 /**
@@ -38,33 +40,6 @@ interface KnowledgePointDetailProps {
  */
 export function KnowledgePointDetail({ id, onEdit, onDelete }: KnowledgePointDetailProps) {
   const { data: knowledgePoint, isLoading, error } = useKnowledgePoint(id)
-
-  // 处理删除操作
-  const handleDelete = () => {
-    Modal.confirm({
-      title: '确认删除',
-      content: (
-        <div>
-          <p>确定要删除知识点 <strong>{knowledgePoint?.name}</strong> 吗？</p>
-          {knowledgePoint && knowledgePoint.questionCount > 0 && (
-            <Alert
-              message="警告"
-              description={`该知识点下有 ${knowledgePoint.questionCount} 道题目，删除前请先处理相关题目。`}
-              type="warning"
-              showIcon
-              style={{ marginTop: 12 }}
-            />
-          )}
-        </div>
-      ),
-      okText: '确认删除',
-      okType: 'danger',
-      cancelText: '取消',
-      onOk: () => {
-        onDelete(id)
-      },
-    })
-  }
 
   // 加载状态
   if (isLoading) {
@@ -114,14 +89,43 @@ export function KnowledgePointDetail({ id, onEdit, onDelete }: KnowledgePointDet
             <Button
               type="primary"
               icon={<EditOutlined />}
-              onClick={() => onEdit(knowledgePoint)}
+              onClick={() => {
+                console.log('编辑按钮被点击')
+                onEdit(knowledgePoint)
+              }}
             >
               编辑
             </Button>
             <Button
               danger
               icon={<DeleteOutlined />}
-              onClick={handleDelete}
+              onClick={(e) => {
+                e?.stopPropagation()
+                
+                Modal.confirm({
+                  title: '确认删除',
+                  content: (
+                    <div>
+                      <p>确定要删除知识点 <strong>{knowledgePoint.name}</strong> 吗？</p>
+                      {knowledgePoint.questionCount > 0 && (
+                        <Alert
+                          message="警告"
+                          description={`该知识点下有 ${knowledgePoint.questionCount} 道题目，删除前请先处理相关题目。`}
+                          type="warning"
+                          showIcon
+                          style={{ marginTop: 12 }}
+                        />
+                      )}
+                    </div>
+                  ),
+                  okText: '确认删除',
+                  okType: 'danger',
+                  cancelText: '取消',
+                  onOk: async () => {
+                    await onDelete(id)
+                  },
+                })
+              }}
             >
               删除
             </Button>
@@ -218,8 +222,8 @@ export function KnowledgePointDetail({ id, onEdit, onDelete }: KnowledgePointDet
         style={{ marginBottom: 16 }}
       >
         <div
-          className="knowledge-point-content"
-          dangerouslySetInnerHTML={{ __html: knowledgePoint.content.rendered }}
+          className="knowledge-point-content tiptap"
+          dangerouslySetInnerHTML={{ __html: convertImageUrls(knowledgePoint.content.rendered) }}
           style={{
             lineHeight: 1.8,
             fontSize: 14,
@@ -239,8 +243,8 @@ export function KnowledgePointDetail({ id, onEdit, onDelete }: KnowledgePointDet
           }
         >
           <div
-            className="knowledge-point-extension"
-            dangerouslySetInnerHTML={{ __html: knowledgePoint.extension.rendered }}
+            className="knowledge-point-extension tiptap"
+            dangerouslySetInnerHTML={{ __html: convertImageUrls(knowledgePoint.extension.rendered) }}
             style={{
               lineHeight: 1.8,
               fontSize: 14,

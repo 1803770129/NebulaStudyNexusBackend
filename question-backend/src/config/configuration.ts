@@ -34,4 +34,24 @@ export default () => ({
     repo: process.env.GITHUB_REPO,
     branch: process.env.GITHUB_BRANCH || 'main',
   },
+
+  // CDN 混合降级配置
+  cdn: {
+    timeout: parseInt(process.env.CDN_TIMEOUT || '5000', 10),
+    priority: (process.env.CDN_PRIORITY || 'statically,github,proxy').split(','),
+    enabledCDNs: {
+      statically: process.env.CDN_ENABLE_STATICALLY !== 'false',
+      github: process.env.CDN_ENABLE_GITHUB !== 'false',
+      proxy: process.env.CDN_ENABLE_PROXY !== 'false',
+    },
+    cacheTTL: parseInt(process.env.CDN_CACHE_TTL || '86400000', 10),
+    healthCheckInterval: parseInt(process.env.CDN_HEALTH_CHECK_INTERVAL || '60000', 10),
+  },
+
+  // 代理服务配置
+  proxy: {
+    cacheTTL: parseInt(process.env.PROXY_CACHE_TTL || '3600', 10),
+    enableCompression: process.env.PROXY_ENABLE_COMPRESSION !== 'false',
+    maxCacheSize: parseInt(process.env.PROXY_MAX_CACHE_SIZE || '104857600', 10),
+  },
 });

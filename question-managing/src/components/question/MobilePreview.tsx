@@ -9,6 +9,7 @@ import { Modal, Radio, Card, Space, Typography, Tag } from 'antd';
 import { MobileOutlined, TabletOutlined } from '@ant-design/icons';
 import type { QuestionFormValues } from '@/types';
 import { QuestionType, DifficultyLevel } from '@/types';
+import { convertImageUrls } from '@/utils/imageUrlHelper';
 import './MobilePreview.css';
 
 const { Title, Text, Paragraph } = Typography;
@@ -136,8 +137,8 @@ export function MobilePreview({ visible, onClose, formValues }: MobilePreviewPro
             {/* 题目内容 */}
             <Card className="question-content-card" size="small">
               <div
-                className="question-content"
-                dangerouslySetInnerHTML={{ __html: formValues.content || '<p>暂无内容</p>' }}
+                className="question-content tiptap"
+                dangerouslySetInnerHTML={{ __html: convertImageUrls(formValues.content || '<p>暂无内容</p>') }}
               />
             </Card>
 
@@ -155,9 +156,9 @@ export function MobilePreview({ visible, onClose, formValues }: MobilePreviewPro
                         {String.fromCharCode(65 + index)}.
                       </div>
                       <div
-                        className="option-content"
+                        className="option-content tiptap"
                         dangerouslySetInnerHTML={{
-                          __html: option.content || `<p>选项 ${String.fromCharCode(65 + index)}</p>`,
+                          __html: convertImageUrls(option.content || `<p>选项 ${String.fromCharCode(65 + index)}</p>`),
                         }}
                       />
                       {option.isCorrect && (
@@ -182,8 +183,8 @@ export function MobilePreview({ visible, onClose, formValues }: MobilePreviewPro
             {formValues.explanation && (
               <Card className="explanation-card" size="small" title="答案解析">
                 <div
-                  className="explanation-content"
-                  dangerouslySetInnerHTML={{ __html: formValues.explanation }}
+                  className="explanation-content tiptap"
+                  dangerouslySetInnerHTML={{ __html: convertImageUrls(formValues.explanation) }}
                 />
               </Card>
             )}
