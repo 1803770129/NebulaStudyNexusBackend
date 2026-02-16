@@ -1,6 +1,6 @@
 /**
  * 应用入口文件
- * 
+ *
  * 职责：
  * 1. 创建 NestJS 应用实例
  * 2. 配置全局中间件、管道、过滤器
@@ -18,7 +18,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 async function bootstrap() {
   // 创建应用实例
   const app = await NestFactory.create(AppModule);
-  
+
   // 获取配置服务
   const configService = app.get(ConfigService);
   const port = configService.get<number>('port') || 3000;
@@ -36,8 +36,8 @@ async function bootstrap() {
   // 全局验证管道 - 自动验证请求参数
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,           // 自动剥离非 DTO 定义的属性
-      transform: true,           // 自动转换类型
+      whitelist: true, // 自动剥离非 DTO 定义的属性
+      transform: true, // 自动转换类型
       forbidNonWhitelisted: true, // 禁止非白名单属性
       transformOptions: {
         enableImplicitConversion: true, // 启用隐式类型转换
@@ -67,7 +67,10 @@ async function bootstrap() {
       },
       'JWT-auth',
     )
-    .addTag('auth', '用户认证')
+    .addTag('auth', '管理员认证')
+    .addTag('student-auth', '学生端认证')
+    .addTag('users', '员工管理')
+    .addTag('students', '学生管理')
     .addTag('questions', '题目管理')
     .addTag('categories', '分类管理')
     .addTag('tags', '标签管理')

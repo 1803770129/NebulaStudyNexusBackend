@@ -1,8 +1,8 @@
 /**
  * 认证 Hook
- * 
+ *
  * 封装用户认证相关的状态和操作
- * 
+ *
  * 学习要点：
  * 1. 认证状态的全局管理
  * 2. 登录/登出流程
@@ -10,34 +10,38 @@
  * 4. 认证状态的持久化
  */
 
-import { useState, useCallback, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useCallback, useEffect } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   login as loginApi,
   register as registerApi,
   logout as logoutApi,
   getProfile,
+  updateProfile as updateProfileApi,
+  changePassword as changePasswordApi,
   isAuthenticated as checkAuth,
   type LoginRequest,
   type RegisterRequest,
   type AuthResponse,
   type UserProfile,
-} from '@/services/authService';
-import type { AppError } from '@/types';
+  type UpdateProfileRequest,
+  type ChangePasswordRequest,
+} from '@/services/authService'
+import type { AppError } from '@/types'
 
 // 查询键
-const AUTH_QUERY_KEY = ['auth', 'profile'];
+const AUTH_QUERY_KEY = ['auth', 'profile']
 
 /**
  * useAuth Hook
- * 
+ *
  * @returns 认证状态和操作方法
- * 
+ *
  * 示例：
  * ```tsx
  * function LoginPage() {
  *   const { login, isLoggingIn, loginError } = useAuth();
- * 
+ *
  *   const handleSubmit = async (values) => {
  *     try {
  *       await login(values);
@@ -46,17 +50,17 @@ const AUTH_QUERY_KEY = ['auth', 'profile'];
  *       message.error(error.message);
  *     }
  *   };
- * 
+ *
  *   return <LoginForm onSubmit={handleSubmit} loading={isLoggingIn} />;
  * }
- * 
+ *
  * function Header() {
  *   const { user, isAuthenticated, logout } = useAuth();
- * 
+ *
  *   if (!isAuthenticated) {
  *     return <Link to="/login">登录</Link>;
  *   }
- * 
+ *
  *   return (
  *     <Dropdown menu={{ items: [{ label: '退出', onClick: logout }] }}>
  *       <span>{user?.username}</span>
@@ -66,10 +70,10 @@ const AUTH_QUERY_KEY = ['auth', 'profile'];
  * ```
  */
 export function useAuth() {
-  const queryClient = useQueryClient();
-  
+  const queryClient = useQueryClient()
+
   // 本地认证状态（用于快速判断，避免等待 API 响应）
-  const [isAuthenticated, setIsAuthenticated] = useState(() => checkAuth());
+  const [isAuthenticated, setIsAuthenticated] = useState(() => checkAuth())
 
   // 查询用户信息
   const profileQuery = useQuery({
@@ -78,106 +82,127 @@ export function useAuth() {
     enabled: isAuthenticated, // 只有已认证时才查询
     staleTime: 5 * 60 * 1000, // 5分钟
     retry: false, // 不重试，避免 Token 过期时无限重试
-  });
+  })
 
   // 登录
   const loginMutation = useMutation({
     mutationFn: (data: LoginRequest) => loginApi(data),
     onSuccess: (response: AuthResponse) => {
-      setIsAuthenticated(true);
+      setIsAuthenticated(true)
       // 直接设置用户信息到缓存
       queryClient.setQueryData(AUTH_QUERY_KEY, {
         sub: response.user.id,
         username: response.user.username,
         role: response.user.role,
-      });
+      })
     },
-  });
+  })
 
   // 注册
   const registerMutation = useMutation({
     mutationFn: (data: RegisterRequest) => registerApi(data),
     onSuccess: (response: AuthResponse) => {
-      setIsAuthenticated(true);
+      setIsAuthenticated(true)
       queryClient.setQueryData(AUTH_QUERY_KEY, {
         sub: response.user.id,
         username: response.user.username,
         role: response.user.role,
-      });
+      })
     },
-  });
+  })
 
   // 登出
   const logout = useCallback(() => {
-    logoutApi();
-    setIsAuthenticated(false);
+    logoutApi()
+    setIsAuthenticated(false)
     // 清除所有缓存
-    queryClient.clear();
-  }, [queryClient]);
+    queryClient.clear()
+  }, [queryClient])
 
   // 监听认证状态变化（如 Token 过期）
   useEffect(() => {
     if (profileQuery.isError) {
       // 获取用户信息失败，可能是 Token 过期
-      logout();
+      logout()
     }
-  }, [profileQuery.isError, logout]);
+  }, [profileQuery.isError, logout])
 
   // 刷新用户信息
   const refreshProfile = useCallback(() => {
-    return profileQuery.refetch();
-  }, [profileQuery]);
+    return profileQuery.refetch()
+  }, [profileQuery])
+
+  // 更新个人信息
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: UpdateProfileRequest) => updateProfileApi(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY })
+    },
+  })
+
+  // 修改密码
+  const changePasswordMutation = useMutation({
+    mutationFn: (data: ChangePasswordRequest) => changePasswordApi(data),
+  })
 
   return {
     // 状态
     isAuthenticated,
     user: profileQuery.data as UserProfile | null,
     isLoadingUser: profileQuery.isLoading,
-    
+
     // 登录
     login: loginMutation.mutateAsync,
     isLoggingIn: loginMutation.isPending,
     loginError: loginMutation.error as AppError | null,
-    
+
     // 注册
     register: registerMutation.mutateAsync,
     isRegistering: registerMutation.isPending,
     registerError: registerMutation.error as AppError | null,
-    
+
     // 登出
     logout,
-    
+
     // 刷新
     refreshProfile,
-  };
+
+    // 更新个人信息
+    updateProfile: updateProfileMutation.mutateAsync,
+    isUpdatingProfile: updateProfileMutation.isPending,
+
+    // 修改密码
+    changePassword: changePasswordMutation.mutateAsync,
+    isChangingPassword: changePasswordMutation.isPending,
+  }
 }
 
 /**
  * 认证守卫 Hook
- * 
+ *
  * 用于保护需要登录的页面
- * 
+ *
  * @returns 认证状态
- * 
+ *
  * 示例：
  * ```tsx
  * function ProtectedPage() {
  *   const { isAuthenticated, isLoading } = useAuthGuard();
- * 
+ *
  *   if (isLoading) return <Spin />;
  *   if (!isAuthenticated) {
  *     return <Navigate to="/login" />;
  *   }
- * 
+ *
  *   return <Dashboard />;
  * }
  * ```
  */
 export function useAuthGuard() {
-  const { isAuthenticated, isLoadingUser } = useAuth();
-  
+  const { isAuthenticated, isLoadingUser } = useAuth()
+
   return {
     isAuthenticated,
     isLoading: isLoadingUser,
-  };
+  }
 }

@@ -18,6 +18,8 @@ import {
   UserOutlined,
   LogoutOutlined,
   BookOutlined,
+  TeamOutlined,
+  SettingOutlined,
 } from '@ant-design/icons'
 import { useUIStore } from '@/stores'
 import { useAuth } from '@/hooks/useAuth'
@@ -53,6 +55,11 @@ const menuItems = [
     icon: <TagsOutlined />,
     label: '标签管理',
   },
+  {
+    key: '/students',
+    icon: <TeamOutlined />,
+    label: '学生管理',
+  },
 ]
 
 /**
@@ -87,9 +94,9 @@ export function MainLayout() {
   const userMenuItems: MenuProps['items'] = [
     {
       key: 'profile',
-      icon: <UserOutlined />,
-      label: user?.username || '用户',
-      disabled: true,
+      icon: <SettingOutlined />,
+      label: '个人设置',
+      onClick: () => navigate('/profile'),
     },
     {
       type: 'divider',

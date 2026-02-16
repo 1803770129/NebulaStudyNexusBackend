@@ -1,6 +1,6 @@
 /**
  * 用户实体
- * 
+ *
  * 定义用户数据模型和数据库映射
  */
 import {
@@ -38,6 +38,9 @@ export class User {
     default: UserRole.USER,
   })
   role: UserRole;
+
+  @Column({ default: true })
+  isActive: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

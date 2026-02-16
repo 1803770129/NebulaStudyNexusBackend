@@ -17,3 +17,4 @@ export {
   useDeleteKnowledgePoint,
   useKnowledgePoints,
 } from './useKnowledgePoint'
+export { useStudents } from './useStudents'

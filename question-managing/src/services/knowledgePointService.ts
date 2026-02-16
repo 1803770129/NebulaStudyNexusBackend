@@ -305,16 +305,29 @@ class KnowledgePointService {
     if (query.tagId) params.tagId = query.tagId;
     if (query.parentId !== undefined) params.parentId = query.parentId;
     
-    const response = await api.get<ApiPaginatedResponse<KnowledgePointApiResponse>>(
+    // 后端返回格式经过 TransformInterceptor 包装：
+    // { statusCode, message, data: { data: [...], total, page, pageSize }, timestamp }
+    const response = await api.get<{
+      statusCode: number;
+      message: string;
+      data: {
+        data: KnowledgePointApiResponse[];
+        total: number;
+        page: number;
+        pageSize: number;
+      };
+      timestamp: string;
+    }>(
       '/knowledge-points',
       params
     );
     
+    // 实际的数据在 response.data.data 中
     return {
-      data: response.data.map(convertApiResponseToKnowledgePoint),
-      total: response.meta.total,
-      page: response.meta.page,
-      pageSize: response.meta.limit,
+      data: response.data.data.map(convertApiResponseToKnowledgePoint),
+      total: response.data.total,
+      page: response.data.page,
+      pageSize: response.data.pageSize,
     };
   }
 

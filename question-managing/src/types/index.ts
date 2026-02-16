@@ -1,6 +1,6 @@
 /**
  * 题目后台管理系统 - 核心类型定义
- * 
+ *
  * 本文件定义了系统中所有核心数据模型的 TypeScript 类型
  * 使用枚举确保类型安全，使用接口定义数据结构
  */
@@ -24,7 +24,7 @@ export const QuestionType = {
   SHORT_ANSWER: 'short_answer',
 } as const
 
-export type QuestionType = typeof QuestionType[keyof typeof QuestionType]
+export type QuestionType = (typeof QuestionType)[keyof typeof QuestionType]
 
 /**
  * 难度等级枚举
@@ -39,7 +39,7 @@ export const DifficultyLevel = {
   HARD: 'hard',
 } as const
 
-export type DifficultyLevel = typeof DifficultyLevel[keyof typeof DifficultyLevel]
+export type DifficultyLevel = (typeof DifficultyLevel)[keyof typeof DifficultyLevel]
 
 // ==================== 基础接口定义 ====================
 
@@ -140,6 +140,47 @@ export interface Tag {
   createdAt: string
   /** 更新时间 */
   updatedAt: string
+}
+
+/**
+ * 学生用户接口
+ * 对应后端 Student 实体
+ */
+export interface Student {
+  /** 学生唯一标识 */
+  id: string
+  /** 手机号 */
+  phone: string | null
+  /** 微信 openid */
+  wxOpenid: string | null
+  /** 微信 unionid */
+  wxUnionid: string | null
+  /** 昵称 */
+  nickname: string
+  /** 头像 URL */
+  avatar: string
+  /** 账号是否启用 */
+  isActive: boolean
+  /** 最后登录时间 */
+  lastLoginAt: string | null
+  /** 创建时间 */
+  createdAt: string
+  /** 更新时间 */
+  updatedAt: string
+}
+
+/**
+ * 学生筛选条件
+ */
+export interface StudentFilters {
+  /** 搜索关键词（昵称/手机号） */
+  keyword?: string
+  /** 账号状态 */
+  isActive?: boolean
+  /** 页码 */
+  page: number
+  /** 每页数量 */
+  limit: number
 }
 
 // ==================== 筛选与分页接口 ====================
@@ -267,7 +308,7 @@ export const ErrorType = {
   NETWORK_ERROR: 'NETWORK_ERROR',
 } as const
 
-export type ErrorType = typeof ErrorType[keyof typeof ErrorType]
+export type ErrorType = (typeof ErrorType)[keyof typeof ErrorType]
 
 /**
  * 应用错误接口
@@ -326,9 +367,6 @@ export function getRenderedContent(content: string | RichContent | undefined): s
  */
 export function isRichContent(content: unknown): content is RichContent {
   return (
-    typeof content === 'object' &&
-    content !== null &&
-    'raw' in content &&
-    'rendered' in content
+    typeof content === 'object' && content !== null && 'raw' in content && 'rendered' in content
   )
 }

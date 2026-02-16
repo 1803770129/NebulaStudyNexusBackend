@@ -1,6 +1,6 @@
 /**
  * 应用配置
- * 
+ *
  * 使用工厂函数模式，从环境变量读取配置
  * 提供类型安全的配置访问
  */
@@ -28,7 +28,7 @@ export default () => ({
 
   // 日志配置
   logLevel: process.env.LOG_LEVEL || 'debug',
-   // GitHub 图床配置
+  // GitHub 图床配置
   github: {
     token: process.env.GITHUB_TOKEN,
     repo: process.env.GITHUB_REPO,
@@ -53,5 +53,11 @@ export default () => ({
     cacheTTL: parseInt(process.env.PROXY_CACHE_TTL || '3600', 10),
     enableCompression: process.env.PROXY_ENABLE_COMPRESSION !== 'false',
     maxCacheSize: parseInt(process.env.PROXY_MAX_CACHE_SIZE || '104857600', 10),
+  },
+
+  // 微信小程序配置
+  wechat: {
+    appid: process.env.WECHAT_APPID || '',
+    secret: process.env.WECHAT_APP_SECRET || '',
   },
 });

@@ -1,6 +1,6 @@
 /**
  * TanStack Query 客户端配置
- * 
+ *
  * 配置全局的 QueryClient 实例
  */
 
@@ -8,7 +8,7 @@ import { QueryClient } from '@tanstack/react-query'
 
 /**
  * 创建 QueryClient 实例
- * 
+ *
  * 配置说明：
  * - staleTime: 数据被认为是新鲜的时间（5分钟）
  * - gcTime: 未使用的数据在缓存中保留的时间（10分钟）
@@ -38,7 +38,7 @@ export const queryClient = new QueryClient({
 
 /**
  * Query Keys 常量
- * 
+ *
  * 集中管理所有查询的 key，便于缓存失效和重新获取
  */
 export const queryKeys = {
@@ -46,8 +46,7 @@ export const queryKeys = {
   questions: {
     all: ['questions'] as const,
     lists: () => [...queryKeys.questions.all, 'list'] as const,
-    list: (filters: Record<string, unknown>) =>
-      [...queryKeys.questions.lists(), filters] as const,
+    list: (filters: Record<string, unknown>) => [...queryKeys.questions.lists(), filters] as const,
     details: () => [...queryKeys.questions.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.questions.details(), id] as const,
   },
@@ -72,10 +71,18 @@ export const queryKeys = {
       [...queryKeys.knowledgePoints.lists(), filters] as const,
     tree: (categoryId?: string) =>
       categoryId
-        ? [...queryKeys.knowledgePoints.all, 'tree', categoryId] as const
-        : [...queryKeys.knowledgePoints.all, 'tree'] as const,
+        ? ([...queryKeys.knowledgePoints.all, 'tree', categoryId] as const)
+        : ([...queryKeys.knowledgePoints.all, 'tree'] as const),
     details: () => [...queryKeys.knowledgePoints.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.knowledgePoints.details(), id] as const,
     questions: (id: string) => [...queryKeys.knowledgePoints.detail(id), 'questions'] as const,
+  },
+  // 学生相关
+  students: {
+    all: ['students'] as const,
+    lists: () => [...queryKeys.students.all, 'list'] as const,
+    list: (filters: Record<string, unknown>) => [...queryKeys.students.lists(), filters] as const,
+    details: () => [...queryKeys.students.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.students.details(), id] as const,
   },
 } as const

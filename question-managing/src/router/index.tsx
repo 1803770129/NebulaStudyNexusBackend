@@ -19,6 +19,8 @@ const QuestionFormPage = lazy(() => import('@/pages/QuestionForm'))
 const CategoryManagePage = lazy(() => import('@/pages/CategoryManage'))
 const TagManagePage = lazy(() => import('@/pages/TagManage'))
 const KnowledgePointManage = lazy(() => import('@/pages/KnowledgePointManage'))
+const StudentManagePage = lazy(() => import('@/pages/StudentManage'))
+const ProfilePage = lazy(() => import('@/pages/Profile'))
 
 // 加载中组件
 const Loading = () => (
@@ -82,6 +84,14 @@ export const router = createBrowserRouter([
       {
         path: 'knowledge-points',
         element: withSuspense(KnowledgePointManage),
+      },
+      {
+        path: 'students',
+        element: withSuspense(StudentManagePage),
+      },
+      {
+        path: 'profile',
+        element: withSuspense(ProfilePage),
       },
     ],
   },
