@@ -1,6 +1,6 @@
 /**
  * 图片上传服务 - GitHub 图床
- * 
+ *
  * 职责：
  * 1. 验证文件类型和大小
  * 2. 上传文件到 GitHub 仓库
@@ -17,12 +17,7 @@ import { UploadResponse } from './cdn/interfaces';
 @Injectable()
 export class UploadService {
   /** 允许的图片类型 */
-  private readonly allowedMimeTypes = [
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-  ];
+  private readonly allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
   /** 最大文件大小 (5MB) */
   private readonly maxFileSize = 5 * 1024 * 1024;
@@ -47,17 +42,14 @@ export class UploadService {
    * @returns 是否有效
    */
   validateImage(file: { mimetype: string; size: number }): boolean {
-    return (
-      this.allowedMimeTypes.includes(file.mimetype) &&
-      file.size <= this.maxFileSize
-    );
+    return this.allowedMimeTypes.includes(file.mimetype) && file.size <= this.maxFileSize;
   }
   /**
    * 获取文件验证错误信息
    * @param file 文件信息
    * @returns 错误信息，如果验证通过则返回 null
    */
-   getValidationError(file: { mimetype: string; size: number }): string | null {
+  getValidationError(file: { mimetype: string; size: number }): string | null {
     if (!this.allowedMimeTypes.includes(file.mimetype)) {
       return `不支持的文件类型: ${file.mimetype}。支持的类型: jpg, png, gif, webp`;
     }
@@ -74,7 +66,7 @@ export class UploadService {
    * @param size 文件大小
    * @returns 上传结果（包含所有降级 URL）
    */
-   async uploadImage(
+  async uploadImage(
     file: Buffer,
     originalname: string,
     mimetype: string,
@@ -126,9 +118,7 @@ export class UploadService {
       };
     } catch (error) {
       if (error.response) {
-        throw new BadRequestException(
-          `GitHub API 错误: ${error.response.data.message}`,
-        );
+        throw new BadRequestException(`GitHub API 错误: ${error.response.data.message}`);
       }
       throw new BadRequestException('图片上传失败');
     }
@@ -155,20 +145,17 @@ export class UploadService {
       const sha = getResponse.data.sha;
 
       // 删除文件
-      await axios.delete(
-        `https://api.github.com/repos/${this.githubRepo}/contents/${filePath}`,
-        {
-          data: {
-            message: `Delete ${filename}`,
-            sha,
-            branch: this.githubBranch,
-          },
-          headers: {
-            Authorization: `token ${this.githubToken}`,
-            'Content-Type': 'application/json',
-          },
+      await axios.delete(`https://api.github.com/repos/${this.githubRepo}/contents/${filePath}`, {
+        data: {
+          message: `Delete ${filename}`,
+          sha,
+          branch: this.githubBranch,
         },
-      );
+        headers: {
+          Authorization: `token ${this.githubToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
     } catch (error) {
       throw new BadRequestException('图片删除失败');
     }
@@ -183,14 +170,11 @@ export class UploadService {
     const filePath = `images/${filename}`;
 
     try {
-      await axios.get(
-        `https://api.github.com/repos/${this.githubRepo}/contents/${filePath}`,
-        {
-          headers: {
-            Authorization: `token ${this.githubToken}`,
-          },
+      await axios.get(`https://api.github.com/repos/${this.githubRepo}/contents/${filePath}`, {
+        headers: {
+          Authorization: `token ${this.githubToken}`,
         },
-      );
+      });
       return true;
     } catch {
       return false;

@@ -33,7 +33,7 @@ describe('HealthMonitor', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         HealthMonitor,
@@ -75,7 +75,7 @@ describe('HealthMonitor', () => {
       expect(result.error).toBeUndefined();
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('cdn.statically.io'),
-        expect.objectContaining({ method: 'HEAD' })
+        expect.objectContaining({ method: 'HEAD' }),
       );
     });
 
@@ -96,10 +96,11 @@ describe('HealthMonitor', () => {
 
     it('should return unhealthy status when request times out', async () => {
       const mockFetch = global.fetch as jest.Mock;
-      mockFetch.mockImplementationOnce(() => 
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('The operation was aborted')), 100)
-        )
+      mockFetch.mockImplementationOnce(
+        () =>
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('The operation was aborted')), 100),
+          ),
       );
 
       const result = await service.checkHealth('statically');
@@ -161,7 +162,7 @@ describe('HealthMonitor', () => {
 
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:3000/api/upload/proxy/test.jpg',
-        expect.objectContaining({ method: 'HEAD' })
+        expect.objectContaining({ method: 'HEAD' }),
       );
     });
   });

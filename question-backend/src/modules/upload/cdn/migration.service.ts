@@ -6,7 +6,7 @@ import { MigrationConfig, MigrationResult } from './interfaces';
 
 /**
  * 迁移服务
- * 
+ *
  * 负责将 jsDelivr URL 批量迁移到 Statically URL
  */
 @Injectable()
@@ -21,9 +21,9 @@ export class MigrationService {
 
   /**
    * 执行迁移
-   * 
+   *
    * 批量更新数据库中的 jsDelivr URL 为 Statically URL
-   * 
+   *
    * @param config 迁移配置
    * @returns 迁移结果
    */
@@ -120,7 +120,7 @@ export class MigrationService {
 
   /**
    * 迁移单个问题的 URL
-   * 
+   *
    * @param question 问题实体
    * @returns 是否有更新
    */
@@ -163,14 +163,15 @@ export class MigrationService {
 
   /**
    * 转换文本中的所有 jsDelivr URL 为 Statically URL
-   * 
+   *
    * @param text 包含 URL 的文本
    * @returns 转换后的文本
    */
   private convertURLsInText(text: string): string {
     // 匹配所有 jsDelivr URL
-    const jsDelivrRegex = /https:\/\/cdn\.jsdelivr\.net\/gh\/([^\/]+)\/([^@]+)@([^\/]+)\/(.+?)(?=["'\s<>]|$)/g;
-    
+    const jsDelivrRegex =
+      /https:\/\/cdn\.jsdelivr\.net\/gh\/([^\/]+)\/([^@]+)@([^\/]+)\/(.+?)(?=["'\s<>]|$)/g;
+
     return text.replace(jsDelivrRegex, (match, owner, repo, branch, path) => {
       return this.convertURL(match);
     });
@@ -178,12 +179,12 @@ export class MigrationService {
 
   /**
    * 转换单个 URL
-   * 
+   *
    * 将 jsDelivr URL 转换为 Statically URL
    * 格式：
    * - jsDelivr: https://cdn.jsdelivr.net/gh/{owner}/{repo}@{branch}/{path}
    * - Statically: https://cdn.statically.io/gh/{owner}/{repo}@{branch}/{path}
-   * 
+   *
    * @param jsDelivrURL jsDelivr URL
    * @returns Statically URL
    */
@@ -206,7 +207,7 @@ export class MigrationService {
 
   /**
    * 检查是否为 jsDelivr URL
-   * 
+   *
    * @param url URL 字符串
    * @returns 是否为 jsDelivr URL
    */
@@ -216,7 +217,7 @@ export class MigrationService {
 
   /**
    * 检查是否为 Statically URL
-   * 
+   *
    * @param url URL 字符串
    * @returns 是否为 Statically URL
    */
@@ -226,9 +227,9 @@ export class MigrationService {
 
   /**
    * 回滚迁移
-   * 
+   *
    * 将 Statically URL 转换回 jsDelivr URL
-   * 
+   *
    * @param config 迁移配置
    * @returns 迁移结果
    */
@@ -368,8 +369,9 @@ export class MigrationService {
    */
   private convertStaticallyToJsDelivr(text: string): string {
     // 匹配所有 Statically URL
-    const staticallyRegex = /https:\/\/cdn\.statically\.io\/gh\/([^\/]+)\/([^@]+)@([^\/]+)\/(.+?)(?=["'\s<>]|$)/g;
-    
+    const staticallyRegex =
+      /https:\/\/cdn\.statically\.io\/gh\/([^\/]+)\/([^@]+)@([^\/]+)\/(.+?)(?=["'\s<>]|$)/g;
+
     return text.replace(staticallyRegex, (match, owner, repo, branch, path) => {
       return `https://cdn.jsdelivr.net/gh/${owner}/${repo}@${branch}/${path}`;
     });
@@ -377,13 +379,13 @@ export class MigrationService {
 
   /**
    * 生成迁移报告
-   * 
+   *
    * @param result 迁移结果
    * @returns 格式化的报告字符串
    */
   generateReport(result: MigrationResult): string {
     const lines: string[] = [];
-    
+
     lines.push('='.repeat(60));
     lines.push('迁移报告');
     lines.push('='.repeat(60));
@@ -393,14 +395,14 @@ export class MigrationService {
     lines.push(`跳过记录数: ${result.skippedRecords}`);
     lines.push(`失败记录数: ${result.failedRecords}`);
     lines.push('');
-    
+
     if (result.totalRecords > 0) {
       const successRate = ((result.updatedRecords / result.totalRecords) * 100).toFixed(2);
       lines.push(`成功率: ${successRate}%`);
     }
-    
+
     lines.push('');
-    
+
     if (result.errors.length > 0) {
       lines.push('错误详情:');
       lines.push('-'.repeat(60));
@@ -412,9 +414,9 @@ export class MigrationService {
     } else {
       lines.push('没有错误发生');
     }
-    
+
     lines.push('='.repeat(60));
-    
+
     return lines.join('\n');
   }
 }

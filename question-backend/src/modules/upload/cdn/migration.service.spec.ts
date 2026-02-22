@@ -52,7 +52,7 @@ describe('MigrationService', () => {
     it('should convert jsDelivr URL to Statically URL', () => {
       const jsDelivrURL = 'https://cdn.jsdelivr.net/gh/owner/repo@main/images/test.jpg';
       const expected = 'https://cdn.statically.io/gh/owner/repo@main/images/test.jpg';
-      
+
       expect(service.convertURL(jsDelivrURL)).toBe(expected);
     });
 
@@ -64,29 +64,37 @@ describe('MigrationService', () => {
     it('should handle complex paths', () => {
       const jsDelivrURL = 'https://cdn.jsdelivr.net/gh/user/project@develop/path/to/image.png';
       const expected = 'https://cdn.statically.io/gh/user/project@develop/path/to/image.png';
-      
+
       expect(service.convertURL(jsDelivrURL)).toBe(expected);
     });
   });
 
   describe('isJsDelivrURL', () => {
     it('should return true for jsDelivr URLs', () => {
-      expect(service.isJsDelivrURL('https://cdn.jsdelivr.net/gh/owner/repo@main/image.jpg')).toBe(true);
+      expect(service.isJsDelivrURL('https://cdn.jsdelivr.net/gh/owner/repo@main/image.jpg')).toBe(
+        true,
+      );
     });
 
     it('should return false for non-jsDelivr URLs', () => {
-      expect(service.isJsDelivrURL('https://cdn.statically.io/gh/owner/repo@main/image.jpg')).toBe(false);
+      expect(service.isJsDelivrURL('https://cdn.statically.io/gh/owner/repo@main/image.jpg')).toBe(
+        false,
+      );
       expect(service.isJsDelivrURL('https://example.com/image.jpg')).toBe(false);
     });
   });
 
   describe('isStaticallyURL', () => {
     it('should return true for Statically URLs', () => {
-      expect(service.isStaticallyURL('https://cdn.statically.io/gh/owner/repo@main/image.jpg')).toBe(true);
+      expect(
+        service.isStaticallyURL('https://cdn.statically.io/gh/owner/repo@main/image.jpg'),
+      ).toBe(true);
     });
 
     it('should return false for non-Statically URLs', () => {
-      expect(service.isStaticallyURL('https://cdn.jsdelivr.net/gh/owner/repo@main/image.jpg')).toBe(false);
+      expect(service.isStaticallyURL('https://cdn.jsdelivr.net/gh/owner/repo@main/image.jpg')).toBe(
+        false,
+      );
       expect(service.isStaticallyURL('https://example.com/image.jpg')).toBe(false);
     });
   });
@@ -154,7 +162,8 @@ describe('MigrationService', () => {
               id: 'opt1',
               content: {
                 raw: 'option',
-                rendered: '<img src="https://cdn.jsdelivr.net/gh/owner/repo@main/images/test3.jpg">',
+                rendered:
+                  '<img src="https://cdn.jsdelivr.net/gh/owner/repo@main/images/test3.jpg">',
               },
               isCorrect: true,
             },
@@ -315,7 +324,7 @@ describe('MigrationService', () => {
 
       jest.spyOn(questionRepository, 'find').mockResolvedValue([question as Question]);
 
-      return service.migrate({ dryRun: true, batchSize: 10 }).then(result => {
+      return service.migrate({ dryRun: true, batchSize: 10 }).then((result) => {
         expect(result.updatedRecords).toBe(1);
       });
     });
@@ -336,7 +345,7 @@ describe('MigrationService', () => {
 
       jest.spyOn(questionRepository, 'find').mockResolvedValue([question as Question]);
 
-      return service.migrate({ dryRun: true, batchSize: 10 }).then(result => {
+      return service.migrate({ dryRun: true, batchSize: 10 }).then((result) => {
         expect(result.updatedRecords).toBe(1);
       });
     });

@@ -48,7 +48,15 @@ export class QuestionService {
    * 创建题目
    */
   async create(createQuestionDto: CreateQuestionDto, creatorId: string): Promise<Question> {
-    const { tagIds, categoryId, knowledgePointIds, content, explanation, options, ...questionData } = createQuestionDto;
+    const {
+      tagIds,
+      categoryId,
+      knowledgePointIds,
+      content,
+      explanation,
+      options,
+      ...questionData
+    } = createQuestionDto;
 
     // 验证分类存在
     await this.categoryService.findById(categoryId);
@@ -57,13 +65,13 @@ export class QuestionService {
     const tags = tagIds ? await this.tagService.findByIds(tagIds) : [];
 
     // 获取知识点
-    const knowledgePoints = knowledgePointIds 
-      ? await this.knowledgePointService.findByIds(knowledgePointIds) 
+    const knowledgePoints = knowledgePointIds
+      ? await this.knowledgePointService.findByIds(knowledgePointIds)
       : [];
 
     // 处理富文本内容
     const processedContent = await this.contentService.processContent(content);
-    const processedExplanation = explanation 
+    const processedExplanation = explanation
       ? await this.contentService.processContent(explanation)
       : null;
     const processedOptions = await this.processOptions(options);
@@ -98,7 +106,16 @@ export class QuestionService {
    * 分页查询题目（返回 rendered 内容用于展示）
    */
   async findAll(queryDto: QueryQuestionDto): Promise<PaginationResponseDto<Question>> {
-    const { page = 1, pageSize = 10, keyword, categoryId, type, difficulty, tagIds, knowledgePointIds } = queryDto;
+    const {
+      page = 1,
+      pageSize = 10,
+      keyword,
+      categoryId,
+      type,
+      difficulty,
+      tagIds,
+      knowledgePointIds,
+    } = queryDto;
 
     const queryBuilder = this.questionRepository
       .createQueryBuilder('question')
@@ -132,20 +149,23 @@ export class QuestionService {
 
     // 标签筛选
     if (tagIds && tagIds.length > 0) {
-      queryBuilder.andWhere((qb) => {
-        const subQuery = qb
-          .subQuery()
-          .select('qt.questionId')
-          .from('question_tags', 'qt')
-          .where('qt.tagId IN (:...tagIds)')
-          .getQuery();
-        return `question.id IN ${subQuery}`;
-      }).setParameter('tagIds', tagIds);
+      queryBuilder
+        .andWhere((qb) => {
+          const subQuery = qb
+            .subQuery()
+            .select('qt.questionId')
+            .from('question_tags', 'qt')
+            .where('qt.tagId IN (:...tagIds)')
+            .getQuery();
+          return `question.id IN ${subQuery}`;
+        })
+        .setParameter('tagIds', tagIds);
     }
 
     // 知识点筛选
     if (knowledgePointIds && knowledgePointIds.length > 0) {
-      queryBuilder.innerJoin('question.knowledgePoints', 'kp')
+      queryBuilder
+        .innerJoin('question.knowledgePoints', 'kp')
         .andWhere('kp.id IN (:...knowledgePointIds)', { knowledgePointIds });
     }
 
@@ -190,7 +210,8 @@ export class QuestionService {
    */
   async update(id: string, updateQuestionDto: UpdateQuestionDto): Promise<Question> {
     const question = await this.findById(id);
-    const { tagIds, categoryId, knowledgePointIds, content, explanation, options, ...updateData } = updateQuestionDto;
+    const { tagIds, categoryId, knowledgePointIds, content, explanation, options, ...updateData } =
+      updateQuestionDto;
 
     // 如果更改分类
     if (categoryId && categoryId !== question.categoryId) {
@@ -244,13 +265,13 @@ export class QuestionService {
     }
 
     if (explanation !== undefined) {
-      question.explanation = explanation 
+      question.explanation = explanation
         ? await this.contentService.processContent(explanation)
         : null;
     }
 
     if (options !== undefined) {
-      question.options = await this.processOptions(options) ?? null;
+      question.options = (await this.processOptions(options)) ?? null;
     }
 
     // 更新其他字段

@@ -8,7 +8,7 @@ import { ProxyConfig, ProxyRequest, ProxyResponse } from './interfaces';
 
 /**
  * 代理服务
- * 
+ *
  * 代理服务，从 GitHub 获取图片并返回，带缓存和压缩
  */
 @Injectable()
@@ -41,9 +41,9 @@ export class ProxyService {
 
   /**
    * 代理图片请求
-   * 
+   *
    * 从 GitHub 获取图片，可选压缩，返回带缓存头的响应
-   * 
+   *
    * @param req 代理请求参数
    * @returns 代理响应
    */
@@ -94,7 +94,7 @@ export class ProxyService {
 
   /**
    * 从 GitHub 获取图片
-   * 
+   *
    * @param filename 文件名
    * @returns 图片 Buffer
    */
@@ -116,12 +116,12 @@ export class ProxyService {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError;
-        
+
         // 处理 GitHub API 限流
         if (axiosError.response?.status === 403) {
           const rateLimitRemaining = axiosError.response.headers['x-ratelimit-remaining'];
           const rateLimitReset = axiosError.response.headers['x-ratelimit-reset'];
-          
+
           this.logger.error('GitHub API rate limit exceeded', {
             remaining: rateLimitRemaining,
             reset: rateLimitReset,
@@ -132,7 +132,9 @@ export class ProxyService {
             {
               statusCode: HttpStatus.TOO_MANY_REQUESTS,
               message: 'GitHub API rate limit exceeded',
-              retryAfter: rateLimitReset ? new Date(parseInt(rateLimitReset) * 1000).toISOString() : undefined,
+              retryAfter: rateLimitReset
+                ? new Date(parseInt(rateLimitReset) * 1000).toISOString()
+                : undefined,
             },
             HttpStatus.TOO_MANY_REQUESTS,
           );
@@ -157,9 +159,9 @@ export class ProxyService {
 
   /**
    * 压缩图片
-   * 
+   *
    * 使用 sharp 库根据参数压缩图片
-   * 
+   *
    * @param buffer 原始图片 Buffer
    * @param width 目标宽度
    * @param height 目标高度
@@ -189,7 +191,7 @@ export class ProxyService {
     // 根据格式应用质量设置
     if (quality !== undefined) {
       const normalizedQuality = Math.max(1, Math.min(100, quality));
-      
+
       switch (format) {
         case 'jpeg':
         case 'jpg':
@@ -198,7 +200,9 @@ export class ProxyService {
         case 'png':
           // PNG 使用压缩级别（0-9），转换质量值
           const compressionLevel = Math.round((100 - normalizedQuality) / 11);
-          sharpInstance = sharpInstance.png({ compressionLevel: Math.max(0, Math.min(9, compressionLevel)) });
+          sharpInstance = sharpInstance.png({
+            compressionLevel: Math.max(0, Math.min(9, compressionLevel)),
+          });
           break;
         case 'webp':
           sharpInstance = sharpInstance.webp({ quality: normalizedQuality });
@@ -214,9 +218,9 @@ export class ProxyService {
 
   /**
    * 生成 ETag
-   * 
+   *
    * 使用 MD5 哈希生成 ETag
-   * 
+   *
    * @param buffer 图片 Buffer
    * @returns ETag 字符串
    */
@@ -227,7 +231,7 @@ export class ProxyService {
 
   /**
    * 根据图片格式获取 Content-Type
-   * 
+   *
    * @param format 图片格式
    * @returns Content-Type 字符串
    */
@@ -248,9 +252,9 @@ export class ProxyService {
 
   /**
    * 处理错误
-   * 
+   *
    * 统一的错误处理逻辑
-   * 
+   *
    * @param error 错误对象
    * @param filename 文件名
    */

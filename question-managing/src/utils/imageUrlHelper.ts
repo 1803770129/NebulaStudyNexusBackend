@@ -33,7 +33,7 @@ export const convertImageUrls = (html: string): string => {
   // 处理相对路径的图片
   return html.replace(
     /src=["'](\/(?:api\/)?upload\/images\/[^"']+)["']/g,
-    (match, path) => {
+    (_, path) => {
       // 如果路径已经包含 /api，直接使用
       // 否则添加 /api 前缀
       const fullPath = path.startsWith('/api') ? path : `/api${path}`;

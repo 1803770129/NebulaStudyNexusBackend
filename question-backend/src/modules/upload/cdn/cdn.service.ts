@@ -4,7 +4,7 @@ import { CDNConfig, FallbackURLs, CDNType } from './interfaces';
 
 /**
  * CDN 服务
- * 
+ *
  * 核心服务，生成降级 URL、管理配置、协调健康检查
  */
 @Injectable()
@@ -27,7 +27,7 @@ export class CDNService {
   static loadConfig(configService: ConfigService): CDNConfig {
     const githubRepo = configService.get<string>('github.repo');
     const githubBranch = configService.get<string>('github.branch', 'main');
-    
+
     if (!githubRepo) {
       throw new Error('GITHUB_REPO environment variable is required');
     }
@@ -37,7 +37,11 @@ export class CDNService {
       githubBranch,
       imagePath: 'images',
       timeout: configService.get<number>('cdn.timeout', 5000),
-      priority: configService.get<string[]>('cdn.priority', ['statically', 'github', 'proxy']) as CDNType[],
+      priority: configService.get<string[]>('cdn.priority', [
+        'statically',
+        'github',
+        'proxy',
+      ]) as CDNType[],
       enabledCDNs: {
         statically: configService.get<boolean>('cdn.enabledCDNs.statically', true),
         github: configService.get<boolean>('cdn.enabledCDNs.github', true),
@@ -49,7 +53,7 @@ export class CDNService {
 
   /**
    * 生成 Statically CDN URL
-   * 
+   *
    * @param filename 图片文件名
    * @returns Statically CDN URL
    */
@@ -60,7 +64,7 @@ export class CDNService {
 
   /**
    * 生成 GitHub Raw URL
-   * 
+   *
    * @param filename 图片文件名
    * @returns GitHub Raw URL
    */
@@ -71,7 +75,7 @@ export class CDNService {
 
   /**
    * 生成代理服务 URL
-   * 
+   *
    * @param filename 图片文件名
    * @returns 代理服务 URL
    */
@@ -81,9 +85,9 @@ export class CDNService {
 
   /**
    * 生成所有降级 URL
-   * 
+   *
    * 根据配置生成降级链，按优先级排序，只包含启用的 CDN
-   * 
+   *
    * @param filename 图片文件名
    * @returns 降级 URL 集合
    */

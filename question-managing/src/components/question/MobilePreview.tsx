@@ -50,7 +50,6 @@ export function MobilePreview({ visible, onClose, formValues }: MobilePreviewPro
       [QuestionType.MULTIPLE_CHOICE]: '多选题',
       [QuestionType.TRUE_FALSE]: '判断题',
       [QuestionType.SHORT_ANSWER]: '简答题',
-      [QuestionType.ESSAY]: '论述题',
       [QuestionType.FILL_BLANK]: '填空题',
     };
     return typeMap[type] || type;
@@ -77,11 +76,12 @@ export function MobilePreview({ visible, onClose, formValues }: MobilePreviewPro
   };
 
   // 是否是选择题
-  const isChoiceQuestion = [
+  const choiceQuestionTypes: QuestionType[] = [
     QuestionType.SINGLE_CHOICE,
     QuestionType.MULTIPLE_CHOICE,
     QuestionType.TRUE_FALSE,
-  ].includes(formValues.type);
+  ];
+  const isChoiceQuestion = choiceQuestionTypes.includes(formValues.type);
 
   return (
     <Modal

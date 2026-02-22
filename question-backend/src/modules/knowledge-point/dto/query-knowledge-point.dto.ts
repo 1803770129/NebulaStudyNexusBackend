@@ -39,7 +39,9 @@ export class QueryKnowledgePointDto {
   @IsUUID('4', { message: '标签 ID 格式不正确' })
   tagId?: string;
 
-  @ApiPropertyOptional({ description: '父知识点 ID（筛选指定父节点下的子知识点，传空字符串或null查询顶级知识点）' })
+  @ApiPropertyOptional({
+    description: '父知识点 ID（筛选指定父节点下的子知识点，传空字符串或null查询顶级知识点）',
+  })
   @IsOptional()
   @IsUUID('4', { message: '父知识点 ID 格式不正确' })
   parentId?: string;

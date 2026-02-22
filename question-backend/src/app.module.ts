@@ -21,6 +21,7 @@ import { StudentModule } from './modules/student/student.module';
 import { StudentAuthModule } from './modules/student-auth/student-auth.module';
 import { QuestionModule } from './modules/question/question.module';
 import { StudentQuestionModule } from './modules/student-question/student-question.module';
+import { ExamModule } from './modules/exam/exam.module';
 import { CategoryModule } from './modules/category/category.module';
 import { TagModule } from './modules/tag/tag.module';
 import { UploadModule } from './modules/upload/upload.module';
@@ -63,6 +64,7 @@ import { UserTypeGuard } from './common/guards/user-type.guard';
     StudentAuthModule,
     QuestionModule,
     StudentQuestionModule,
+    ExamModule,
     CategoryModule,
     TagModule,
     UploadModule,

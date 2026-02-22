@@ -1,6 +1,6 @@
 /**
  * TypeORM 数据源配置
- * 
+ *
  * 用于 CLI 命令（迁移等）
  */
 import { DataSource } from 'typeorm';

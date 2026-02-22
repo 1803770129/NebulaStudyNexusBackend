@@ -1,6 +1,6 @@
 /**
  * 设置验证脚本
- * 
+ *
  * 验证项目结构和配置是否正确设置
  */
 
@@ -82,27 +82,21 @@ class SetupVerifier {
     console.log('\n=== 前端文件验证 ===');
     this.verifyFileExists(
       '../../../../../question-managing/src/services/cdn/types.ts',
-      '前端类型定义'
+      '前端类型定义',
     );
     this.verifyFileExists(
       '../../../../../question-managing/src/services/cdn/README.md',
-      '前端服务文档'
+      '前端服务文档',
     );
-    this.verifyFileExists(
-      '../../../../../question-managing/.env.example',
-      '前端环境变量示例'
-    );
-    this.verifyFileExists(
-      '../../../../../question-managing/vitest.config.ts',
-      'Vitest 配置'
-    );
+    this.verifyFileExists('../../../../../question-managing/.env.example', '前端环境变量示例');
+    this.verifyFileExists('../../../../../question-managing/vitest.config.ts', 'Vitest 配置');
 
     // 验证目录结构
     console.log('\n=== 目录结构验证 ===');
     this.verifyDirectoryExists('./', 'CDN 模块目录');
     this.verifyDirectoryExists(
       '../../../../../question-managing/src/services/cdn',
-      '前端 CDN 服务目录'
+      '前端 CDN 服务目录',
     );
 
     // 验证依赖
@@ -110,14 +104,8 @@ class SetupVerifier {
     this.verifyDependency('../../../../package.json', 'jest');
     this.verifyDependency('../../../../package.json', 'fast-check');
     this.verifyDependency('../../../../package.json', 'ts-jest');
-    this.verifyDependency(
-      '../../../../../question-managing/package.json',
-      'vitest'
-    );
-    this.verifyDependency(
-      '../../../../../question-managing/package.json',
-      'fast-check'
-    );
+    this.verifyDependency('../../../../../question-managing/package.json', 'vitest');
+    this.verifyDependency('../../../../../question-managing/package.json', 'fast-check');
 
     // 输出结果
     console.log('\n=== 验证结果 ===');

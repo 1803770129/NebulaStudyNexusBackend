@@ -6,7 +6,14 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 import { UploadService } from './upload.service';
 import { Multer } from 'multer';
 
@@ -39,11 +46,6 @@ export class UploadController {
       throw new BadRequestException('请选择要上传的文件');
     }
 
-    return this.uploadService.uploadImage(
-      file.buffer,
-      file.originalname,
-      file.mimetype,
-      file.size,
-    );
+    return this.uploadService.uploadImage(file.buffer, file.originalname, file.mimetype, file.size);
   }
 }

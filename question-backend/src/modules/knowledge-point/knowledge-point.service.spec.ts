@@ -64,9 +64,7 @@ describe('KnowledgePointService', () => {
     }).compile();
 
     service = module.get<KnowledgePointService>(KnowledgePointService);
-    repository = module.get<Repository<KnowledgePoint>>(
-      getRepositoryToken(KnowledgePoint),
-    );
+    repository = module.get<Repository<KnowledgePoint>>(getRepositoryToken(KnowledgePoint));
   });
 
   afterEach(() => {
@@ -94,10 +92,7 @@ describe('KnowledgePointService', () => {
         },
       ];
 
-      mockQueryBuilder.getManyAndCount.mockResolvedValue([
-        mockKnowledgePoints,
-        2,
-      ]);
+      mockQueryBuilder.getManyAndCount.mockResolvedValue([mockKnowledgePoints, 2]);
 
       const query: QueryKnowledgePointDto = {
         page: 1,
@@ -126,10 +121,9 @@ describe('KnowledgePointService', () => {
 
       await service.findAll(query);
 
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'kp.name ILIKE :search',
-        { search: '%二叉树%' },
-      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('kp.name ILIKE :search', {
+        search: '%二叉树%',
+      });
     });
 
     it('应该支持按分类筛选', async () => {
@@ -143,10 +137,9 @@ describe('KnowledgePointService', () => {
 
       await service.findAll(query);
 
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'kp.categoryId = :categoryId',
-        { categoryId: 'cat-123' },
-      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('kp.categoryId = :categoryId', {
+        categoryId: 'cat-123',
+      });
     });
 
     it('应该支持按标签筛选', async () => {
@@ -160,10 +153,9 @@ describe('KnowledgePointService', () => {
 
       await service.findAll(query);
 
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'tags.id = :tagId',
-        { tagId: 'tag-123' },
-      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('tags.id = :tagId', {
+        tagId: 'tag-123',
+      });
     });
 
     it('应该支持查询顶级知识点（parentId为空字符串）', async () => {
@@ -191,10 +183,9 @@ describe('KnowledgePointService', () => {
 
       await service.findAll(query);
 
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'kp.parentId = :parentId',
-        { parentId: 'parent-123' },
-      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('kp.parentId = :parentId', {
+        parentId: 'parent-123',
+      });
     });
 
     it('应该按层级和创建时间排序', async () => {

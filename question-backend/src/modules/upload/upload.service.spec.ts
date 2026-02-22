@@ -36,12 +36,12 @@ describe('UploadService', () => {
               ],
               primary: 'https://cdn.statically.io/gh/test/repo@main/images/test.jpg',
             }),
-            generateStaticallyURL: jest.fn().mockReturnValue(
-              'https://cdn.statically.io/gh/test/repo@main/images/test.jpg',
-            ),
-            generateGitHubRawURL: jest.fn().mockReturnValue(
-              'https://raw.githubusercontent.com/test/repo/main/images/test.jpg',
-            ),
+            generateStaticallyURL: jest
+              .fn()
+              .mockReturnValue('https://cdn.statically.io/gh/test/repo@main/images/test.jpg'),
+            generateGitHubRawURL: jest
+              .fn()
+              .mockReturnValue('https://raw.githubusercontent.com/test/repo/main/images/test.jpg'),
             generateProxyURL: jest.fn().mockReturnValue('/api/upload/proxy/test.jpg'),
           },
         },

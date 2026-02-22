@@ -1,6 +1,6 @@
 /**
  * 知识点服务
- * 
+ *
  * 负责知识点的 CRUD 操作、树形结构构建、统计更新等功能
  */
 import {
@@ -47,13 +47,13 @@ export class KnowledgePointService {
 
   /**
    * 创建知识点
-   * 
+   *
    * 1. 验证同级名称是否重复
    * 2. 验证分类是否存在
    * 3. 计算层级和路径
    * 4. 关联标签
    * 5. 保存到数据库
-   * 
+   *
    * @param dto 创建知识点 DTO
    * @returns 创建的知识点实体
    * @throws {ConflictException} 同级名称重复
@@ -108,7 +108,7 @@ export class KnowledgePointService {
 
   /**
    * 根据 ID 查找知识点
-   * 
+   *
    * @param id 知识点 ID
    * @returns 知识点实体
    * @throws {NotFoundException} 知识点不存在
@@ -128,7 +128,7 @@ export class KnowledgePointService {
 
   /**
    * 查询知识点列表（分页）
-   * 
+   *
    * 支持以下功能：
    * - 分页查询
    * - 按名称搜索（ILIKE 模糊匹配）
@@ -136,7 +136,7 @@ export class KnowledgePointService {
    * - 按标签筛选
    * - 按父知识点筛选
    * - 按层级和创建时间排序
-   * 
+   *
    * @param query 查询参数
    * @returns 分页响应数据
    */
@@ -176,8 +176,7 @@ export class KnowledgePointService {
     }
 
     // 排序：先按层级升序，再按创建时间降序
-    qb.orderBy('kp.level', 'ASC')
-      .addOrderBy('kp.createdAt', 'DESC');
+    qb.orderBy('kp.level', 'ASC').addOrderBy('kp.createdAt', 'DESC');
 
     // 分页
     const skip = (page - 1) * limit;
@@ -225,9 +224,7 @@ export class KnowledgePointService {
       return;
     }
 
-    await Promise.all(
-      ids.map(id => this.updateQuestionCount(id, delta))
-    );
+    await Promise.all(ids.map((id) => this.updateQuestionCount(id, delta)));
   }
 
   /**
@@ -246,8 +243,7 @@ export class KnowledgePointService {
       qb.where('kp.categoryId = :categoryId', { categoryId });
     }
 
-    qb.orderBy('kp.level', 'ASC')
-      .addOrderBy('kp.name', 'ASC');
+    qb.orderBy('kp.level', 'ASC').addOrderBy('kp.name', 'ASC');
 
     const kps = await qb.getMany();
 
@@ -269,7 +265,7 @@ export class KnowledgePointService {
     // 如果更新名称，检查同级名称重复
     if (name && name !== kp.name) {
       const existing = await this.kpRepository.findOne({
-        where: { name, parentId: parentId !== undefined ? (parentId || null) : kp.parentId },
+        where: { name, parentId: parentId !== undefined ? parentId || null : kp.parentId },
       });
       if (existing && existing.id !== id) {
         throw new ConflictException('同级知识点名称已存在');
@@ -356,7 +352,7 @@ export class KnowledgePointService {
     const roots: KnowledgePointTreeNode[] = [];
 
     // 创建节点映射
-    kps.forEach(kp => {
+    kps.forEach((kp) => {
       map.set(kp.id, {
         id: kp.id,
         name: kp.name,
@@ -369,7 +365,7 @@ export class KnowledgePointService {
     });
 
     // 构建树结构
-    kps.forEach(kp => {
+    kps.forEach((kp) => {
       const node = map.get(kp.id)!;
       if (kp.parentId) {
         const parent = map.get(kp.parentId);

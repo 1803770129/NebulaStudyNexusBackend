@@ -13,6 +13,10 @@ import {
 } from 'typeorm';
 import { Student } from '@/modules/student/entities/student.entity';
 import { Question } from '@/modules/question/entities/question.entity';
+import { User } from '@/modules/user/entities/user.entity';
+import { PracticeAttemptType } from '../enums';
+import { PracticeSession } from './practice-session.entity';
+import { PracticeSessionItem } from './practice-session-item.entity';
 
 @Entity('practice_records')
 export class PracticeRecord {
@@ -35,6 +39,30 @@ export class PracticeRecord {
   @Column()
   questionId: string;
 
+  /** 练习会话（非会话场景为空） */
+  @ManyToOne(() => PracticeSession, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'sessionId' })
+  session: PracticeSession | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  sessionId: string | null;
+
+  /** 会话中的题目项（非会话场景为空） */
+  @ManyToOne(() => PracticeSessionItem, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'sessionItemId' })
+  sessionItem: PracticeSessionItem | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  sessionItemId: string | null;
+
+  /** 做题来源类型：练习/复习/考试 */
+  @Column({
+    type: 'enum',
+    enum: PracticeAttemptType,
+    default: PracticeAttemptType.PRACTICE,
+  })
+  attemptType: PracticeAttemptType;
+
   /** 学生提交的答案（格式因题型而异） */
   @Column({ type: 'jsonb' })
   submittedAnswer: any;
@@ -46,6 +74,28 @@ export class PracticeRecord {
   /** 做题用时（秒） */
   @Column({ default: 0 })
   duration: number;
+
+  @Column({ type: 'double precision', nullable: true })
+  score: number | null;
+
+  @Column({ type: 'text', nullable: true })
+  gradingFeedback: string | null;
+
+  @Column({ type: 'jsonb', nullable: true })
+  gradingTags: string[] | null;
+
+  @Column({ type: 'boolean', nullable: true })
+  isPassed: boolean | null;
+
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'gradedBy' })
+  gradedByUser: User | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  gradedBy: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  gradedAt: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;

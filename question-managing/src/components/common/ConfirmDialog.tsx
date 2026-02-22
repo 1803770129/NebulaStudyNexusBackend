@@ -4,9 +4,9 @@
  * 用于替代 Modal.confirm，解决 React 19 兼容性问题
  */
 
-import { Modal, Button } from 'antd'
+import { Modal } from 'antd'
 import { ExclamationCircleOutlined } from '@ant-design/icons'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 interface ConfirmDialogProps {
   /** 是否显示对话框 */

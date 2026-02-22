@@ -168,16 +168,6 @@ interface KnowledgePointTreeNodeApiResponse {
 /**
  * API 分页响应格式
  */
-interface ApiPaginatedResponse<T> {
-  data: T[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
-
 // ==================== 数据转换函数 ====================
 
 /**

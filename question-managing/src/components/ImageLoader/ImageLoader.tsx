@@ -1,4 +1,4 @@
-import React, { Component, createRef } from 'react';
+import { Component, createRef, type ReactElement } from 'react';
 import type { ImageLoaderProps, ImageLoaderState } from '@/services/cdn/types';
 import './ImageLoader.css';
 
@@ -317,7 +317,7 @@ export class ImageLoader extends Component<ImageLoaderProps, ImageLoaderState> {
     return convertedUrl;
   }
 
-  render(): JSX.Element {
+  render(): ReactElement {
     const { status, urls, currentUrlIndex } = this.state;
     const { alt, className, filename } = this.props;
 

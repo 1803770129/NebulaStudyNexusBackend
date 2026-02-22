@@ -33,22 +33,22 @@
 
   /* 链接样式 */
   a {
-    color: #1890ff;
+    color: var(--kp-link);
     text-decoration: underline;
     cursor: pointer;
   }
 
   a:hover {
-    color: #40a9ff;
+    color: var(--kp-link-hover);
   }
 
   /* 公式样式 */
   .latex-formula {
-    background-color: #f0f5ff;
+    background-color: var(--kp-formula-bg);
     padding: 2px 6px;
     border-radius: 4px;
     font-family: 'Courier New', monospace;
-    color: #1890ff;
+    color: var(--kp-formula-text);
   }
 
   .latex-formula-rendered {
@@ -82,7 +82,7 @@
 
   /* 代码 */
   code {
-    background-color: #f5f5f5;
+    background-color: var(--kp-inline-code-bg);
     padding: 2px 6px;
     border-radius: 3px;
     font-family: 'Courier New', monospace;
@@ -91,16 +91,16 @@
 
   /* 引用 */
   blockquote {
-    border-left: 3px solid #d9d9d9;
+    border-left: 3px solid var(--kp-blockquote-border);
     padding-left: 16px;
     margin: 8px 0;
-    color: #666;
+    color: var(--kp-blockquote-text);
   }
 
   /* 水平线 */
   hr {
     border: none;
-    border-top: 1px solid #d9d9d9;
+    border-top: 1px solid var(--kp-divider);
     margin: 16px 0;
   }
 }

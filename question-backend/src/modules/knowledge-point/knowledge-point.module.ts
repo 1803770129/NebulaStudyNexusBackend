@@ -7,11 +7,7 @@ import { CategoryModule } from '@/modules/category/category.module';
 import { TagModule } from '@/modules/tag/tag.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([KnowledgePoint]),
-    CategoryModule,
-    TagModule,
-  ],
+  imports: [TypeOrmModule.forFeature([KnowledgePoint]), CategoryModule, TagModule],
   controllers: [KnowledgePointController],
   providers: [KnowledgePointService],
   exports: [KnowledgePointService],

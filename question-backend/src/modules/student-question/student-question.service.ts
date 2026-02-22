@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 学生端题目服务
  *
  * 核心业务逻辑：题目查询（答案隐藏）、提交答案、自动判题、
@@ -12,14 +12,26 @@ import { QuestionType } from '@/modules/question/enums/question-type.enum';
 import { PracticeRecord } from './entities/practice-record.entity';
 import { Favorite } from './entities/favorite.entity';
 import { WrongBook } from './entities/wrong-book.entity';
+import { ReviewDailyTask } from './entities/review-daily-task.entity';
 import {
   StudentQueryQuestionDto,
   SubmitAnswerDto,
   QueryPracticeRecordDto,
   QueryFavoriteDto,
   QueryWrongBookDto,
+  QueryTodayReviewDto,
+  QueryReviewHistoryDto,
 } from './dto';
 import { PaginationResponseDto } from '@/common/dto/pagination-response.dto';
+import { PracticeAttemptType, ReviewDailyTaskStatus } from './enums';
+import { ManualGradingService } from './manual-grading.service';
+import { ReviewPlanService } from './review-plan.service';
+
+export interface SubmitAnswerContext {
+  sessionId?: string;
+  sessionItemId?: string;
+  attemptType?: PracticeAttemptType;
+}
 
 @Injectable()
 export class StudentQuestionService {
@@ -32,6 +44,10 @@ export class StudentQuestionService {
     private readonly favoriteRepo: Repository<Favorite>,
     @InjectRepository(WrongBook)
     private readonly wrongBookRepo: Repository<WrongBook>,
+    @InjectRepository(ReviewDailyTask)
+    private readonly reviewDailyTaskRepo: Repository<ReviewDailyTask>,
+    private readonly manualGradingService: ManualGradingService,
+    private readonly reviewPlanService: ReviewPlanService,
   ) {}
 
   // ─── 题目查询 ──────────────────────────────────────────────
@@ -127,7 +143,12 @@ export class StudentQuestionService {
   /**
    * 提交答案 → 自动判题 → 写入做题记录 → 答错写入错题本
    */
-  async submitAnswer(studentId: string, questionId: string, dto: SubmitAnswerDto) {
+  async submitAnswer(
+    studentId: string,
+    questionId: string,
+    dto: SubmitAnswerDto,
+    context?: SubmitAnswerContext,
+  ) {
     // 1. 查询题目（含答案）
     const question = await this.questionRepo.findOne({
       where: { id: questionId },
@@ -144,14 +165,31 @@ export class StudentQuestionService {
     const record = this.practiceRecordRepo.create({
       studentId,
       questionId,
+      sessionId: context?.sessionId ?? null,
+      sessionItemId: context?.sessionItemId ?? null,
+      attemptType: context?.attemptType ?? PracticeAttemptType.PRACTICE,
       submittedAnswer: dto.answer,
       isCorrect,
       duration: dto.duration ?? 0,
+      score: null,
+      gradingFeedback: null,
+      gradingTags: null,
+      isPassed: null,
+      gradedBy: null,
+      gradedAt: null,
     });
     const savedRecord = await this.practiceRecordRepo.save(record);
 
+    let manualGradingTaskId: string | null = null;
+    if (question.type === QuestionType.SHORT_ANSWER) {
+      const task = await this.manualGradingService.createTaskFromPracticeRecord(savedRecord);
+      manualGradingTaskId = task.id;
+    }
+
     // 4. 答错 → 写入或更新错题本
-    if (isCorrect === false) {
+    if (context?.attemptType === PracticeAttemptType.REVIEW && isCorrect !== null) {
+      await this.applyReviewResult(studentId, questionId, dto.answer, isCorrect);
+    } else if (isCorrect === false) {
       await this.upsertWrongBook(studentId, questionId, dto.answer);
     }
 
@@ -162,6 +200,8 @@ export class StudentQuestionService {
       explanation: question.explanation,
       options: question.options ?? undefined,
       practiceRecordId: savedRecord.id,
+      manualGradingTaskId,
+      isManualGradingPending: question.type === QuestionType.SHORT_ANSWER,
     };
   }
 
@@ -265,6 +305,71 @@ export class StudentQuestionService {
   }
 
   /**
+   * 获取今日到期待复习列表
+   */
+  async getTodayReviewQueue(
+    studentId: string,
+    queryDto: QueryTodayReviewDto,
+  ): Promise<PaginationResponseDto<any>> {
+    const { page = 1, pageSize = 10, includeMastered = false } = queryDto;
+    const runDate = this.getRunDateKey(new Date());
+    const now = new Date();
+
+    const taskQb = this.reviewDailyTaskRepo
+      .createQueryBuilder('task')
+      .innerJoinAndSelect('task.wrongBook', 'wrongBook')
+      .leftJoinAndSelect('wrongBook.question', 'question')
+      .leftJoinAndSelect('question.category', 'category')
+      .leftJoinAndSelect('question.tags', 'tag')
+      .where('task.studentId = :studentId', { studentId })
+      .andWhere('task.runDate = :runDate', { runDate })
+      .andWhere('task.status = :taskStatus', { taskStatus: ReviewDailyTaskStatus.PENDING });
+
+    if (!includeMastered) {
+      taskQb.andWhere('wrongBook.isMastered = :isMastered', { isMastered: false });
+    }
+
+    taskQb.orderBy('task.dueAt', 'ASC', 'NULLS FIRST');
+    taskQb.addOrderBy('wrongBook.lastWrongAt', 'DESC');
+    taskQb.skip((page - 1) * pageSize).take(pageSize);
+
+    const [taskRows, taskTotal] = await taskQb.getManyAndCount();
+    if (taskTotal > 0) {
+      const list = taskRows.map((task) => ({
+        ...task.wrongBook,
+        dailyTaskId: task.id,
+        dailyTaskStatus: task.status,
+        question: task.wrongBook.question ? this.sanitizeQuestion(task.wrongBook.question) : null,
+      }));
+      return new PaginationResponseDto(list, taskTotal, page, pageSize);
+    }
+
+    const fallbackQb = this.wrongBookRepo
+      .createQueryBuilder('wrongBook')
+      .leftJoinAndSelect('wrongBook.question', 'question')
+      .leftJoinAndSelect('question.category', 'category')
+      .leftJoinAndSelect('question.tags', 'tag')
+      .where('wrongBook.studentId = :studentId', { studentId })
+      .andWhere('(wrongBook.nextReviewAt IS NULL OR wrongBook.nextReviewAt <= :now)', { now });
+
+    if (!includeMastered) {
+      fallbackQb.andWhere('wrongBook.isMastered = :isMastered', { isMastered: false });
+    }
+
+    fallbackQb.orderBy('wrongBook.nextReviewAt', 'ASC', 'NULLS FIRST');
+    fallbackQb.addOrderBy('wrongBook.lastWrongAt', 'DESC');
+    fallbackQb.skip((page - 1) * pageSize).take(pageSize);
+
+    const [data, total] = await fallbackQb.getManyAndCount();
+    const sanitized = data.map((item) => ({
+      ...item,
+      question: item.question ? this.sanitizeQuestion(item.question) : null,
+    }));
+
+    return new PaginationResponseDto(sanitized, total, page, pageSize);
+  }
+
+  /**
    * 标记已掌握 / 取消掌握
    */
   async toggleMastered(studentId: string, wrongBookId: string): Promise<WrongBook> {
@@ -328,12 +433,55 @@ export class StudentQuestionService {
 
     return new PaginationResponseDto(data, total, page, pageSize);
   }
+  async getReviewHistory(
+    studentId: string,
+    queryDto: QueryReviewHistoryDto,
+  ): Promise<PaginationResponseDto<PracticeRecord>> {
+    const { page = 1, pageSize = 10, questionId, from, to } = queryDto;
+
+    const qb = this.practiceRecordRepo
+      .createQueryBuilder('record')
+      .leftJoinAndSelect('record.question', 'question')
+      .where('record.studentId = :studentId', { studentId })
+      .andWhere('record.attemptType = :attemptType', { attemptType: PracticeAttemptType.REVIEW });
+
+    if (questionId) {
+      qb.andWhere('record.questionId = :questionId', { questionId });
+    }
+
+    if (from) {
+      qb.andWhere('record.createdAt >= :from', { from: new Date(from) });
+    }
+
+    if (to) {
+      qb.andWhere('record.createdAt <= :to', { to: new Date(to) });
+    }
+
+    qb.orderBy('record.createdAt', 'DESC');
+    qb.skip((page - 1) * pageSize).take(pageSize);
+
+    const [data, total] = await qb.getManyAndCount();
+    return new PaginationResponseDto(data, total, page, pageSize);
+  }
 
   // ─── 私有方法 ──────────────────────────────────────────────
 
   /**
    * 隐藏答案、解析、creator 和选项中的 isCorrect
    */
+  async getPracticeRecordById(studentId: string, recordId: string): Promise<PracticeRecord> {
+    const record = await this.practiceRecordRepo.findOne({
+      where: { id: recordId, studentId },
+      relations: ['question'],
+    });
+
+    if (!record) {
+      throw new NotFoundException('Resource not found');
+    }
+
+    return record;
+  }
+
   private sanitizeQuestion(question: Question): any {
     const { answer, explanation, creator, creatorId, ...safe } = question as any;
 
@@ -392,23 +540,117 @@ export class StudentQuestionService {
     questionId: string,
     wrongAnswer: any,
   ): Promise<void> {
+    const now = new Date();
+    const schedule = this.reviewPlanService.planAfterWrongAnswer(now);
     const existing = await this.wrongBookRepo.findOne({
       where: { studentId, questionId },
     });
 
     if (existing) {
-      existing.wrongCount++;
-      existing.lastWrongAt = new Date();
+      existing.wrongCount += 1;
+      existing.lastWrongAt = now;
       existing.lastWrongAnswer = wrongAnswer;
-      existing.isMastered = false; // 再次答错，重置掌握状态
+      existing.isMastered = false;
+      existing.reviewLevel = schedule.reviewLevel;
+      existing.nextReviewAt = schedule.nextReviewAt;
+      existing.lastReviewResult = null;
+      existing.lastReviewedAt = null;
       await this.wrongBookRepo.save(existing);
     } else {
       await this.wrongBookRepo.save({
         studentId,
         questionId,
-        lastWrongAt: new Date(),
+        wrongCount: 1,
+        lastWrongAt: now,
         lastWrongAnswer: wrongAnswer,
+        isMastered: false,
+        reviewLevel: schedule.reviewLevel,
+        nextReviewAt: schedule.nextReviewAt,
+        lastReviewResult: null,
+        lastReviewedAt: null,
       });
     }
+  }
+
+  private async applyReviewResult(
+    studentId: string,
+    questionId: string,
+    submittedAnswer: any,
+    isCorrect: boolean,
+  ): Promise<void> {
+    const now = new Date();
+    const existing = await this.wrongBookRepo.findOne({
+      where: { studentId, questionId },
+    });
+
+    if (!existing) {
+      if (isCorrect) {
+        await this.markTodayReviewTaskDone(studentId, questionId, now);
+        return;
+      }
+
+      const schedule = this.reviewPlanService.planAfterWrongAnswer(now);
+      await this.wrongBookRepo.save({
+        studentId,
+        questionId,
+        wrongCount: 1,
+        lastWrongAt: now,
+        lastWrongAnswer: submittedAnswer,
+        isMastered: false,
+        reviewLevel: schedule.reviewLevel,
+        nextReviewAt: schedule.nextReviewAt,
+        lastReviewResult: false,
+        lastReviewedAt: now,
+      });
+      await this.markTodayReviewTaskDone(studentId, questionId, now);
+      return;
+    }
+
+    const schedule = this.reviewPlanService.planAfterReview(existing.reviewLevel, isCorrect, now);
+    existing.reviewLevel = schedule.reviewLevel;
+    existing.nextReviewAt = schedule.nextReviewAt;
+    existing.lastReviewResult = isCorrect;
+    existing.lastReviewedAt = now;
+
+    if (isCorrect) {
+      if (this.reviewPlanService.shouldAutoMaster(schedule.reviewLevel)) {
+        existing.isMastered = true;
+      }
+    } else {
+      existing.wrongCount += 1;
+      existing.lastWrongAt = now;
+      existing.lastWrongAnswer = submittedAnswer;
+      existing.isMastered = false;
+    }
+
+    await this.wrongBookRepo.save(existing);
+    await this.markTodayReviewTaskDone(studentId, questionId, now);
+  }
+
+  private async markTodayReviewTaskDone(
+    studentId: string,
+    questionId: string,
+    completedAt: Date,
+  ): Promise<void> {
+    const runDate = this.getRunDateKey(completedAt);
+    await this.reviewDailyTaskRepo
+      .createQueryBuilder()
+      .update(ReviewDailyTask)
+      .set({
+        status: ReviewDailyTaskStatus.DONE,
+        completedAt,
+      })
+      .where('studentId = :studentId', { studentId })
+      .andWhere('questionId = :questionId', { questionId })
+      .andWhere('runDate = :runDate', { runDate })
+      .andWhere('status = :status', { status: ReviewDailyTaskStatus.PENDING })
+      .execute();
+  }
+
+  private getRunDateKey(now: Date): string {
+    const year = now.getUTCFullYear();
+    const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+    const date = String(now.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${date}`;
   }
 }

@@ -1,47 +1,24 @@
-/**
- * 知识点详情组件
- * 
- * 显示知识点的完整信息，包括基本信息、内容、拓展内容和统计信息
- * 提供编辑和删除操作
- */
-
-import { Card, Spin, Alert, Button, Space, Tag, Descriptions, Statistic, Row, Col, Modal, Typography } from 'antd'
+import { Card, Spin, Alert, Button, Space, Tag, Descriptions, Statistic, Row, Col, Modal, Typography, theme } from 'antd'
 import { EditOutlined, DeleteOutlined, BookOutlined, FileTextOutlined } from '@ant-design/icons'
-
-const { Title } = Typography
 import { useKnowledgePoint } from '@/hooks/useKnowledgePoint'
 import type { KnowledgePoint } from '@/services/knowledgePointService'
 import { convertImageUrls } from '@/utils/imageUrlHelper'
 import './KnowledgePointContent.css'
 
+const { Title } = Typography
+
 interface KnowledgePointDetailProps {
-  /** 知识点 ID */
   id: string
-  /** 编辑回调 */
   onEdit: (kp: KnowledgePoint) => void
-  /** 删除回调 */
   onDelete: (id: string) => Promise<void> | void
 }
 
-/**
- * 知识点详情组件
- * 
- * 使用 useKnowledgePoint hook 加载知识点数据
- * 显示知识点的所有信息，包括基本信息、内容、拓展内容和统计
- * 
- * @example
- * ```tsx
- * <KnowledgePointDetail
- *   id="kp-id"
- *   onEdit={(kp) => setEditingKp(kp)}
- *   onDelete={(id) => handleDelete(id)}
- * />
- * ```
- */
 export function KnowledgePointDetail({ id, onEdit, onDelete }: KnowledgePointDetailProps) {
   const { data: knowledgePoint, isLoading, error } = useKnowledgePoint(id)
+  const {
+    token: { colorText, colorTextTertiary, colorFillAlter },
+  } = theme.useToken()
 
-  // 加载状态
   if (isLoading) {
     return (
       <div style={{ textAlign: 'center', padding: '48px 0' }}>
@@ -50,7 +27,6 @@ export function KnowledgePointDetail({ id, onEdit, onDelete }: KnowledgePointDet
     )
   }
 
-  // 错误状态
   if (error) {
     return (
       <Alert
@@ -62,7 +38,6 @@ export function KnowledgePointDetail({ id, onEdit, onDelete }: KnowledgePointDet
     )
   }
 
-  // 数据不存在
   if (!knowledgePoint) {
     return (
       <Alert
@@ -76,24 +51,18 @@ export function KnowledgePointDetail({ id, onEdit, onDelete }: KnowledgePointDet
 
   return (
     <div style={{ maxWidth: 1200 }}>
-      {/* 标题区域 */}
       <Card
         title={
           <Space>
             <BookOutlined />
-            <Title level={3} style={{ margin: 0 }}>{knowledgePoint.name}</Title>
+            <Title level={3} style={{ margin: 0 }}>
+              {knowledgePoint.name}
+            </Title>
           </Space>
         }
         extra={
           <Space>
-            <Button
-              type="primary"
-              icon={<EditOutlined />}
-              onClick={() => {
-                console.log('编辑按钮被点击')
-                onEdit(knowledgePoint)
-              }}
-            >
+            <Button type="primary" icon={<EditOutlined />} onClick={() => onEdit(knowledgePoint)}>
               编辑
             </Button>
             <Button
@@ -101,12 +70,13 @@ export function KnowledgePointDetail({ id, onEdit, onDelete }: KnowledgePointDet
               icon={<DeleteOutlined />}
               onClick={(e) => {
                 e?.stopPropagation()
-                
                 Modal.confirm({
                   title: '确认删除',
                   content: (
                     <div>
-                      <p>确定要删除知识点 <strong>{knowledgePoint.name}</strong> 吗？</p>
+                      <p>
+                        确定要删除知识点 <strong>{knowledgePoint.name}</strong> 吗？
+                      </p>
                       {knowledgePoint.questionCount > 0 && (
                         <Alert
                           message="警告"
@@ -133,55 +103,51 @@ export function KnowledgePointDetail({ id, onEdit, onDelete }: KnowledgePointDet
         }
         style={{ marginBottom: 16 }}
       >
-        {/* 基本信息 */}
         <Descriptions column={2} bordered>
           <Descriptions.Item label="所属分类">
             {knowledgePoint.category ? (
               <Tag color="blue">{knowledgePoint.category.name}</Tag>
             ) : (
-              <span style={{ color: '#999' }}>未分类</span>
+              <span style={{ color: colorTextTertiary }}>未分类</span>
             )}
           </Descriptions.Item>
-          
-          <Descriptions.Item label="层级">
-            第 {knowledgePoint.level} 级
-          </Descriptions.Item>
-          
+
+          <Descriptions.Item label="层级">第 {knowledgePoint.level} 级</Descriptions.Item>
+
           <Descriptions.Item label="标签" span={2}>
             {knowledgePoint.tags.length > 0 ? (
               <Space wrap>
-                {knowledgePoint.tags.map(tag => (
+                {knowledgePoint.tags.map((tag) => (
                   <Tag key={tag.id} color={tag.color}>
                     {tag.name}
                   </Tag>
                 ))}
               </Space>
             ) : (
-              <span style={{ color: '#999' }}>无标签</span>
+              <span style={{ color: colorTextTertiary }}>无标签</span>
             )}
           </Descriptions.Item>
-          
+
           <Descriptions.Item label="路径">
-            {knowledgePoint.path || <span style={{ color: '#999' }}>根节点</span>}
+            {knowledgePoint.path || <span style={{ color: colorTextTertiary }}>根节点</span>}
           </Descriptions.Item>
-          
+
           <Descriptions.Item label="关联题目">
             <Tag color={knowledgePoint.questionCount > 0 ? 'green' : 'default'}>
               {knowledgePoint.questionCount} 道题目
             </Tag>
           </Descriptions.Item>
-          
+
           <Descriptions.Item label="创建时间">
             {new Date(knowledgePoint.createdAt).toLocaleString('zh-CN')}
           </Descriptions.Item>
-          
+
           <Descriptions.Item label="更新时间">
             {new Date(knowledgePoint.updatedAt).toLocaleString('zh-CN')}
           </Descriptions.Item>
         </Descriptions>
       </Card>
 
-      {/* 统计信息 */}
       <Card title="统计信息" style={{ marginBottom: 16 }}>
         <Row gutter={16}>
           <Col span={8}>
@@ -211,7 +177,6 @@ export function KnowledgePointDetail({ id, onEdit, onDelete }: KnowledgePointDet
         </Row>
       </Card>
 
-      {/* 知识点内容 */}
       <Card
         title={
           <Space>
@@ -227,12 +192,11 @@ export function KnowledgePointDetail({ id, onEdit, onDelete }: KnowledgePointDet
           style={{
             lineHeight: 1.8,
             fontSize: 14,
-            color: '#333',
+            color: colorText,
           }}
         />
       </Card>
 
-      {/* 拓展内容（如果存在） */}
       {knowledgePoint.extension && (
         <Card
           title={
@@ -248,8 +212,8 @@ export function KnowledgePointDetail({ id, onEdit, onDelete }: KnowledgePointDet
             style={{
               lineHeight: 1.8,
               fontSize: 14,
-              color: '#333',
-              backgroundColor: '#f5f5f5',
+              color: colorText,
+              backgroundColor: colorFillAlter,
               padding: 16,
               borderRadius: 4,
             }}

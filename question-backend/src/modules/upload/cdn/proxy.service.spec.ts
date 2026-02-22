@@ -28,8 +28,9 @@ describe('ProxyService', () => {
         {
           provide: CDNService,
           useValue: {
-            generateGitHubRawURL: jest.fn((filename: string) => 
-              `https://raw.githubusercontent.com/test/repo/main/uploads/${filename}`
+            generateGitHubRawURL: jest.fn(
+              (filename: string) =>
+                `https://raw.githubusercontent.com/test/repo/main/uploads/${filename}`,
             ),
             getConfig: jest.fn(() => ({
               timeout: 5000,
@@ -158,7 +159,7 @@ describe('ProxyService', () => {
 
       // Act & Assert
       await expect(service.proxyImage({ filename: 'test.png' })).rejects.toThrow(HttpException);
-      
+
       try {
         await service.proxyImage({ filename: 'test.png' });
       } catch (error) {
@@ -182,8 +183,10 @@ describe('ProxyService', () => {
       mockedAxios.isAxiosError.mockReturnValue(true);
 
       // Act & Assert
-      await expect(service.proxyImage({ filename: 'nonexistent.png' })).rejects.toThrow(HttpException);
-      
+      await expect(service.proxyImage({ filename: 'nonexistent.png' })).rejects.toThrow(
+        HttpException,
+      );
+
       try {
         await service.proxyImage({ filename: 'nonexistent.png' });
       } catch (error) {
@@ -201,7 +204,7 @@ describe('ProxyService', () => {
 
       // Act & Assert
       await expect(service.proxyImage({ filename: 'test.png' })).rejects.toThrow(HttpException);
-      
+
       try {
         await service.proxyImage({ filename: 'test.png' });
       } catch (error) {
@@ -222,14 +225,14 @@ describe('ProxyService', () => {
 
       // Act
       const result1 = await service.proxyImage({ filename: 'test.png' });
-      
+
       // Reset mock and call again
       mockedAxios.get.mockResolvedValue({
         data: mockImageBuffer,
         status: 200,
         headers: {},
       });
-      
+
       const result2 = await service.proxyImage({ filename: 'test.png' });
 
       // Assert

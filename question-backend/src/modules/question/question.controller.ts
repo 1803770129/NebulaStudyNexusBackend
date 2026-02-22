@@ -27,10 +27,7 @@ export class QuestionController {
   @ApiOperation({ summary: '创建题目' })
   @ApiResponse({ status: 201, description: '创建成功' })
   @ApiResponse({ status: 400, description: '参数验证失败' })
-  create(
-    @Body() createQuestionDto: CreateQuestionDto,
-    @CurrentUser() user: JwtPayload,
-  ) {
+  create(@Body() createQuestionDto: CreateQuestionDto, @CurrentUser() user: JwtPayload) {
     return this.questionService.create(createQuestionDto, user.sub);
   }
 
@@ -53,10 +50,7 @@ export class QuestionController {
   @ApiOperation({ summary: '更新题目' })
   @ApiResponse({ status: 200, description: '更新成功' })
   @ApiResponse({ status: 404, description: '题目不存在' })
-  update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateQuestionDto: UpdateQuestionDto,
-  ) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() updateQuestionDto: UpdateQuestionDto) {
     return this.questionService.update(id, updateQuestionDto);
   }
 

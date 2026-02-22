@@ -45,8 +45,10 @@ describe('CDNService', () => {
     it('should generate correct Statically CDN URL', () => {
       const filename = 'test-image.jpg';
       const url = service.generateStaticallyURL(filename);
-      
-      expect(url).toBe('https://cdn.statically.io/gh/test-owner/test-repo@main/images/test-image.jpg');
+
+      expect(url).toBe(
+        'https://cdn.statically.io/gh/test-owner/test-repo@main/images/test-image.jpg',
+      );
     });
   });
 
@@ -54,8 +56,10 @@ describe('CDNService', () => {
     it('should generate correct GitHub Raw URL', () => {
       const filename = 'test-image.jpg';
       const url = service.generateGitHubRawURL(filename);
-      
-      expect(url).toBe('https://raw.githubusercontent.com/test-owner/test-repo/main/images/test-image.jpg');
+
+      expect(url).toBe(
+        'https://raw.githubusercontent.com/test-owner/test-repo/main/images/test-image.jpg',
+      );
     });
   });
 
@@ -63,7 +67,7 @@ describe('CDNService', () => {
     it('should generate correct proxy URL', () => {
       const filename = 'test-image.jpg';
       const url = service.generateProxyURL(filename);
-      
+
       expect(url).toBe('/api/upload/proxy/test-image.jpg');
     });
   });
@@ -72,7 +76,7 @@ describe('CDNService', () => {
     it('should generate complete fallback chain with all CDNs enabled', () => {
       const filename = 'test-image.jpg';
       const result = service.generateFallbackURLs(filename);
-      
+
       expect(result.filename).toBe(filename);
       expect(result.urls).toHaveLength(3);
       expect(result.urls[0]).toContain('statically');
@@ -101,7 +105,7 @@ describe('CDNService', () => {
 
       const customService = new CDNService(customConfigService as any);
       const result = customService.generateFallbackURLs('test.jpg');
-      
+
       expect(result.urls[0]).toContain('raw.githubusercontent');
       expect(result.urls[1]).toContain('statically');
       expect(result.urls[2]).toContain('/api/upload/proxy/');
@@ -127,11 +131,11 @@ describe('CDNService', () => {
 
       const customService = new CDNService(customConfigService as any);
       const result = customService.generateFallbackURLs('test.jpg');
-      
+
       expect(result.urls).toHaveLength(2);
       expect(result.urls[0]).toContain('raw.githubusercontent');
       expect(result.urls[1]).toContain('/api/upload/proxy/');
-      expect(result.urls.some(url => url.includes('statically'))).toBe(false);
+      expect(result.urls.some((url) => url.includes('statically'))).toBe(false);
     });
 
     it('should return proxy URL when all CDNs are disabled', () => {
@@ -154,7 +158,7 @@ describe('CDNService', () => {
 
       const customService = new CDNService(customConfigService as any);
       const result = customService.generateFallbackURLs('test.jpg');
-      
+
       expect(result.urls).toHaveLength(1);
       expect(result.urls[0]).toContain('/api/upload/proxy/');
     });
@@ -170,7 +174,7 @@ describe('CDNService', () => {
       };
 
       expect(() => CDNService.loadConfig(invalidConfigService as any)).toThrow(
-        'GITHUB_REPO environment variable is required'
+        'GITHUB_REPO environment variable is required',
       );
     });
 
@@ -183,7 +187,7 @@ describe('CDNService', () => {
       };
 
       const config = CDNService.loadConfig(minimalConfigService as any);
-      
+
       expect(config.githubBranch).toBe('main');
       expect(config.timeout).toBe(5000);
       expect(config.cacheTTL).toBe(86400000);
@@ -194,11 +198,11 @@ describe('CDNService', () => {
   describe('getConfig', () => {
     it('should return a copy of the config', () => {
       const config = service.getConfig();
-      
+
       expect(config).toBeDefined();
       expect(config.githubRepo).toBe('test-owner/test-repo');
       expect(config.timeout).toBe(5000);
-      
+
       // Verify it's a copy, not the original
       config.timeout = 10000;
       expect(service.getConfig().timeout).toBe(5000);

@@ -1,6 +1,6 @@
 /**
  * 公式渲染服务
- * 
+ *
  * 职责：
  * 1. 将 LaTeX 公式转换为 SVG
  * 2. 支持批量转换
@@ -23,7 +23,7 @@ export class FormulaService {
    */
   private initMathJax(): void {
     if (this.initialized) return;
-    
+
     mjAPI.config({
       MathJax: {
         // 配置 MathJax
@@ -44,24 +44,22 @@ export class FormulaService {
    */
   async renderToSvg(latex: string, inline = false): Promise<string | null> {
     try {
-      const result = await new Promise<{ svg?: string; errors?: string[] }>(
-        (resolve, reject) => {
-          mjAPI.typeset(
-            {
-              math: latex,
-              format: inline ? 'inline-TeX' : 'TeX',
-              svg: true,
-            },
-            (data) => {
-              if (data.errors && data.errors.length > 0) {
-                reject(new Error(data.errors.join(', ')));
-              } else {
-                resolve(data);
-              }
-            },
-          );
-        },
-      );
+      const result = await new Promise<{ svg?: string; errors?: string[] }>((resolve, reject) => {
+        mjAPI.typeset(
+          {
+            math: latex,
+            format: inline ? 'inline-TeX' : 'TeX',
+            svg: true,
+          },
+          (data) => {
+            if (data.errors && data.errors.length > 0) {
+              reject(new Error(data.errors.join(', ')));
+            } else {
+              resolve(data);
+            }
+          },
+        );
+      });
 
       if (result.svg) {
         // 转换为 data URI

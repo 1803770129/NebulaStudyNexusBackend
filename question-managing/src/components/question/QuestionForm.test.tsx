@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { QuestionForm } from './QuestionForm';
 import { QuestionType, DifficultyLevel } from '@/types';
 import type { Category, Tag, Question } from '@/types';

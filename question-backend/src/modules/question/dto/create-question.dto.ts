@@ -1,6 +1,6 @@
 /**
  * 创建题目 DTO
- * 
+ *
  * 接收原始 HTML 内容（包含 LaTeX 公式），后端会处理为 RichContent 结构
  */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -26,7 +26,10 @@ export class CreateQuestionDto {
   @MaxLength(200, { message: '题目标题不能超过200个字符' })
   title: string;
 
-  @ApiProperty({ description: '题目内容（原始 HTML，可包含 LaTeX 公式）', example: '请选择正确的答案...' })
+  @ApiProperty({
+    description: '题目内容（原始 HTML，可包含 LaTeX 公式）',
+    example: '请选择正确的答案...',
+  })
   @IsString()
   @IsNotEmpty({ message: '题目内容不能为空' })
   content: string;
@@ -61,7 +64,10 @@ export class CreateQuestionDto {
   @IsOptional()
   options?: OptionDto[];
 
-  @ApiProperty({ description: '答案', oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] })
+  @ApiProperty({
+    description: '答案',
+    oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }],
+  })
   @IsNotEmpty({ message: '答案不能为空' })
   answer: string | string[];
 

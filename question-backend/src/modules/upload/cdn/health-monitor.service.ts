@@ -5,14 +5,15 @@ import { HealthStatus, HealthCheckConfig, CDNType } from './interfaces';
 
 /**
  * 健康监控服务
- * 
+ *
  * 监控 CDN 健康状态，缓存检查结果
  */
 @Injectable()
 export class HealthMonitor {
   private readonly logger = new Logger(HealthMonitor.name);
   private readonly config: HealthCheckConfig;
-  private readonly healthCache: Map<CDNType, { status: HealthStatus; expiresAt: number }> = new Map();
+  private readonly healthCache: Map<CDNType, { status: HealthStatus; expiresAt: number }> =
+    new Map();
 
   constructor(
     private readonly cdnService: CDNService,
@@ -35,7 +36,7 @@ export class HealthMonitor {
 
   /**
    * 检查 CDN 健康状态（带缓存）
-   * 
+   *
    * @param cdnType CDN 类型
    * @returns 健康状态
    */
@@ -64,7 +65,7 @@ export class HealthMonitor {
 
   /**
    * 执行实际的健康检查（无缓存）
-   * 
+   *
    * @param cdnType CDN 类型
    * @returns 健康状态
    */
@@ -146,7 +147,7 @@ export class HealthMonitor {
 
   /**
    * 获取所有 CDN 的健康状态
-   * 
+   *
    * @returns 所有 CDN 的健康状态映射
    */
   async getAllHealthStatus(): Promise<Record<string, HealthStatus>> {

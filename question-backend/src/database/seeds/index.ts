@@ -1,6 +1,6 @@
 /**
  * 种子数据入口
- * 
+ *
  * 运行: npm run seed
  */
 import { AppDataSource } from '../data-source';
@@ -12,7 +12,6 @@ import { UserRole } from '@/modules/user/enums/user-role.enum';
 import { QuestionType } from '@/modules/question/enums/question-type.enum';
 import { DifficultyLevel } from '@/modules/question/enums/difficulty-level.enum';
 import * as bcrypt from 'bcrypt';
-
 async function seed() {
   console.log('🌱 Starting seed...');
 

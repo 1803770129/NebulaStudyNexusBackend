@@ -321,7 +321,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
             onClick={() => editor.chain().focus().toggleStrike().run()}
           />
         </Tooltip>
-        <div style={{ borderLeft: '1px solid #d9d9d9', height: 20, margin: '0 4px' }} />
+        <div className="toolbar-divider" />
         <Tooltip title="有序列表">
           <Button
             type={editor.isActive('orderedList') ? 'primary' : 'text'}
@@ -336,7 +336,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
             onClick={() => editor.chain().focus().toggleBulletList().run()}
           />
         </Tooltip>
-        <div style={{ borderLeft: '1px solid #d9d9d9', height: 20, margin: '0 4px' }} />
+        <div className="toolbar-divider" />
         <Tooltip title="插入链接">
           <Button
             type={editor.isActive('link') ? 'primary' : 'text'}
@@ -356,7 +356,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
             onClick={() => setFormulaDialogVisible(true)}
           />
         </Tooltip>
-        <div style={{ borderLeft: '1px solid #d9d9d9', height: 20, margin: '0 4px' }} />
+        <div className="toolbar-divider" />
         <Tooltip title="清除格式">
           <Button
             type="text"

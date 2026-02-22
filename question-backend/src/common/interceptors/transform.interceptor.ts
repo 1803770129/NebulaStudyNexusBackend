@@ -1,18 +1,12 @@
 /**
  * 响应转换拦截器
- * 
+ *
  * 职责：
  * 1. 统一成功响应格式
  * 2. 添加响应时间记录
  * 3. 包装响应数据
  */
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 

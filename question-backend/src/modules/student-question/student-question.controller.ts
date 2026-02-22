@@ -20,13 +20,19 @@ import { UserType } from '@/common/decorators/user-type.decorator';
 import { CurrentUser, StudentJwtPayload } from '@/common/decorators/current-user.decorator';
 import { StudentQuestionService } from './student-question.service';
 import { StudentStatisticsService } from './student-statistics.service';
+import { PracticeSessionService } from './practice-session.service';
 import {
+  CreateReviewSessionDto,
   StudentQueryQuestionDto,
   SubmitAnswerDto,
   QueryPracticeRecordDto,
   QueryFavoriteDto,
   QueryWrongBookDto,
+  QueryTodayReviewDto,
+  QueryReviewHistoryDto,
+  SubmitPracticeSessionItemDto,
 } from './dto';
+import { PracticeSessionMode } from './enums';
 
 @ApiTags('student-questions')
 @ApiBearerAuth('JWT-auth')
@@ -36,6 +42,7 @@ export class StudentQuestionController {
   constructor(
     private readonly studentQuestionService: StudentQuestionService,
     private readonly studentStatisticsService: StudentStatisticsService,
+    private readonly practiceSessionService: PracticeSessionService,
   ) {}
 
   // ─── 题目浏览 ──────────────────────────────────────────────
@@ -95,6 +102,47 @@ export class StudentQuestionController {
     return this.studentQuestionService.getWrongBook(user.sub, queryDto);
   }
 
+  @Get('review/today')
+  @ApiOperation({ summary: '获取今日到期待复习列表' })
+  @ApiResponse({ status: 200, description: '获取成功' })
+  getTodayReviewQueue(
+    @Query() queryDto: QueryTodayReviewDto,
+    @CurrentUser() user: StudentJwtPayload,
+  ) {
+    return this.studentQuestionService.getTodayReviewQueue(user.sub, queryDto);
+  }
+
+  @Post('review/start')
+  @ApiOperation({ summary: 'Create today review session' })
+  @ApiResponse({ status: 201, description: 'Review session created' })
+  startReviewSession(@Body() dto: CreateReviewSessionDto, @CurrentUser() user: StudentJwtPayload) {
+    return this.practiceSessionService.createSession(user.sub, {
+      mode: PracticeSessionMode.REVIEW,
+      questionCount: dto.questionCount,
+    });
+  }
+
+  @Get('review/history')
+  @ApiOperation({ summary: 'Get review submit history' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  getReviewHistory(
+    @Query() queryDto: QueryReviewHistoryDto,
+    @CurrentUser() user: StudentJwtPayload,
+  ) {
+    return this.studentQuestionService.getReviewHistory(user.sub, queryDto);
+  }
+
+  @Post('review/items/:itemId/submit')
+  @ApiOperation({ summary: 'Submit answer for current review item' })
+  @ApiResponse({ status: 201, description: 'Review item submitted' })
+  submitReviewItem(
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @Body() dto: SubmitPracticeSessionItemDto,
+    @CurrentUser() user: StudentJwtPayload,
+  ) {
+    return this.practiceSessionService.submitReviewItem(user.sub, itemId, dto);
+  }
+
   @Patch('wrong-book/:id/master')
   @ApiOperation({ summary: '标记已掌握/取消掌握' })
   @ApiResponse({ status: 200, description: '操作成功' })
@@ -124,6 +172,17 @@ export class StudentQuestionController {
     @CurrentUser() user: StudentJwtPayload,
   ) {
     return this.studentQuestionService.getPracticeRecords(user.sub, queryDto);
+  }
+
+  @Get('practice-records/:id')
+  @ApiOperation({ summary: 'Get practice record detail' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 404, description: 'Practice record not found' })
+  getPracticeRecordById(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: StudentJwtPayload,
+  ) {
+    return this.studentQuestionService.getPracticeRecordById(user.sub, id);
   }
 
   @Get('statistics')

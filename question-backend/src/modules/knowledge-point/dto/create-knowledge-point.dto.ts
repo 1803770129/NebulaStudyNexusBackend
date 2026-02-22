@@ -16,12 +16,18 @@ import { Type } from 'class-transformer';
  * 富文本内容 DTO
  */
 export class RichContentDto {
-  @ApiProperty({ description: '原始内容', example: '二叉树遍历是指按照某种顺序访问树中的所有节点...' })
+  @ApiProperty({
+    description: '原始内容',
+    example: '二叉树遍历是指按照某种顺序访问树中的所有节点...',
+  })
   @IsString()
   @IsNotEmpty({ message: '原始内容不能为空' })
   raw: string;
 
-  @ApiProperty({ description: '渲染后内容', example: '<p>二叉树遍历是指按照某种顺序访问树中的所有节点...</p>' })
+  @ApiProperty({
+    description: '渲染后内容',
+    example: '<p>二叉树遍历是指按照某种顺序访问树中的所有节点...</p>',
+  })
   @IsString()
   @IsNotEmpty({ message: '渲染后内容不能为空' })
   rendered: string;
@@ -58,7 +64,11 @@ export class CreateKnowledgePointDto {
   @IsUUID('4', { message: '父知识点 ID 格式不正确' })
   parentId?: string;
 
-  @ApiPropertyOptional({ description: '标签 ID 列表', type: [String], example: ['uuid-1', 'uuid-2'] })
+  @ApiPropertyOptional({
+    description: '标签 ID 列表',
+    type: [String],
+    example: ['uuid-1', 'uuid-2'],
+  })
   @IsOptional()
   @IsUUID('4', { each: true, message: '标签 ID 格式不正确' })
   tagIds?: string[];

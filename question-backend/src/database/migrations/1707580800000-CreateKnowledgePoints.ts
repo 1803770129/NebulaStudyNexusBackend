@@ -2,7 +2,7 @@ import { MigrationInterface, QueryRunner, Table, TableForeignKey, TableIndex } f
 
 /**
  * 创建知识点表迁移
- * 
+ *
  * 创建 knowledge_points 表，支持：
  * - 基本信息（名称、内容、拓展内容）
  * - 分类关联（多对一）

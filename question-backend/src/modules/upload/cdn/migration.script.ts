@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * 迁移脚本 - jsDelivr 到 Statically
- * 
+ *
  * 使用方法：
  * - 试运行: npm run migration:cdn -- --dry-run
  * - 执行迁移: npm run migration:cdn
@@ -21,7 +21,9 @@ async function bootstrap() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
   const rollback = args.includes('--rollback');
-  const batchSize = parseInt(args.find(arg => arg.startsWith('--batch-size='))?.split('=')[1] || '100');
+  const batchSize = parseInt(
+    args.find((arg) => arg.startsWith('--batch-size='))?.split('=')[1] || '100',
+  );
 
   console.log('\n' + '='.repeat(60));
   console.log('CDN URL 迁移脚本');

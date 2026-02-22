@@ -2,7 +2,7 @@ import { MigrationInterface, QueryRunner, Table, TableForeignKey, TableIndex } f
 
 /**
  * 创建知识点关联表迁移
- * 
+ *
  * 创建两个中间表：
  * 1. question_knowledge_points - 题目与知识点的多对多关联
  * 2. knowledge_point_tags - 知识点与标签的多对多关联
@@ -32,7 +32,10 @@ export class CreateKnowledgePointRelations1707580900000 implements MigrationInte
     );
 
     // 添加复合主键
-    await queryRunner.createPrimaryKey('question_knowledge_points', ['questionId', 'knowledgePointId']);
+    await queryRunner.createPrimaryKey('question_knowledge_points', [
+      'questionId',
+      'knowledgePointId',
+    ]);
 
     // 添加外键约束：questionId → questions
     await queryRunner.createForeignKey(

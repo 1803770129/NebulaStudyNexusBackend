@@ -20,6 +20,12 @@ const CategoryManagePage = lazy(() => import('@/pages/CategoryManage'))
 const TagManagePage = lazy(() => import('@/pages/TagManage'))
 const KnowledgePointManage = lazy(() => import('@/pages/KnowledgePointManage'))
 const StudentManagePage = lazy(() => import('@/pages/StudentManage'))
+const UserManagePage = lazy(() => import('@/pages/UserManage'))
+const PracticeSessionManagePage = lazy(() => import('@/pages/PracticeSessionManage'))
+const ManualGradingManagePage = lazy(() => import('@/pages/ManualGradingManage'))
+const ReviewTaskManagePage = lazy(() => import('@/pages/ReviewTaskManage'))
+const ExamPaperManagePage = lazy(() => import('@/pages/ExamPaperManage'))
+const ExamAttemptManagePage = lazy(() => import('@/pages/ExamAttemptManage'))
 const ProfilePage = lazy(() => import('@/pages/Profile'))
 
 // 加载中组件
@@ -88,6 +94,30 @@ export const router = createBrowserRouter([
       {
         path: 'students',
         element: withSuspense(StudentManagePage),
+      },
+      {
+        path: 'users',
+        element: withSuspense(UserManagePage),
+      },
+      {
+        path: 'practice-sessions',
+        element: withSuspense(PracticeSessionManagePage),
+      },
+      {
+        path: 'grading-tasks',
+        element: withSuspense(ManualGradingManagePage),
+      },
+      {
+        path: 'review-tasks',
+        element: withSuspense(ReviewTaskManagePage),
+      },
+      {
+        path: 'exam-papers',
+        element: withSuspense(ExamPaperManagePage),
+      },
+      {
+        path: 'exam-attempts',
+        element: withSuspense(ExamAttemptManagePage),
       },
       {
         path: 'profile',

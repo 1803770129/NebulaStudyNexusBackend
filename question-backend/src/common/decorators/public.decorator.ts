@@ -1,6 +1,6 @@
 /**
  * 公开路由装饰器
- * 
+ *
  * 用于标记不需要认证的路由
  * 被此装饰器标记的路由将跳过 JWT 认证
  */
@@ -10,7 +10,7 @@ export const IS_PUBLIC_KEY = 'isPublic';
 
 /**
  * @Public() 装饰器
- * 
+ *
  * 使用示例：
  * @Public()
  * @Get('health')

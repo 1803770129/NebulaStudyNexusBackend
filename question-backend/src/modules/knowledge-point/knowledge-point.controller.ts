@@ -9,12 +9,7 @@ import {
   Query,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { KnowledgePointService } from './knowledge-point.service';
 import { CreateKnowledgePointDto } from './dto/create-knowledge-point.dto';
 import { UpdateKnowledgePointDto } from './dto/update-knowledge-point.dto';
@@ -27,7 +22,10 @@ export class KnowledgePointController {
   constructor(private readonly kpService: KnowledgePointService) {}
 
   @Post()
-  @ApiOperation({ summary: '创建知识点', description: '创建一个新的知识点，支持富文本内容和树形结构' })
+  @ApiOperation({
+    summary: '创建知识点',
+    description: '创建一个新的知识点，支持富文本内容和树形结构',
+  })
   @ApiResponse({ status: 201, description: '创建成功' })
   @ApiResponse({ status: 400, description: '请求参数错误' })
   @ApiResponse({ status: 401, description: '未授权，需要登录' })
@@ -64,10 +62,7 @@ export class KnowledgePointController {
   @ApiResponse({ status: 400, description: '请求参数错误' })
   @ApiResponse({ status: 404, description: '知识点不存在' })
   @ApiResponse({ status: 409, description: '知识点名称冲突' })
-  update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateKnowledgePointDto,
-  ) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateKnowledgePointDto) {
     return this.kpService.update(id, dto);
   }
 

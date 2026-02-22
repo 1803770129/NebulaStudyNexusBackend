@@ -1,6 +1,6 @@
 /**
  * 角色装饰器
- * 
+ *
  * 用于标记路由所需的角色权限
  * 配合 RolesGuard 使用实现 RBAC
  */
@@ -11,7 +11,7 @@ export const ROLES_KEY = 'roles';
 
 /**
  * @Roles() 装饰器
- * 
+ *
  * 使用示例：
  * @Roles(UserRole.ADMIN)
  * @Delete(':id')

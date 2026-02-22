@@ -15,12 +15,11 @@ import { queryKeys } from '@/lib/queryClient'
 import {
   knowledgePointService,
   type KnowledgePoint,
-  type KnowledgePointTreeNode,
   type CreateKnowledgePointDto,
   type QueryKnowledgePointDto,
   type PaginationQueryDto,
 } from '@/services/knowledgePointService'
-import type { AppError, PaginatedResponse, Question } from '@/types'
+import type { AppError } from '@/types'
 
 /**
  * useKnowledgePointList Hook
@@ -53,7 +52,7 @@ import type { AppError, PaginatedResponse, Question } from '@/types'
  */
 export function useKnowledgePointList(query: QueryKnowledgePointDto = {}) {
   return useQuery({
-    queryKey: queryKeys.knowledgePoints.list(query),
+    queryKey: queryKeys.knowledgePoints.list(query as unknown as Record<string, unknown>),
     queryFn: () => knowledgePointService.getList(query),
     staleTime: 2 * 60 * 1000, // 2分钟
     gcTime: 5 * 60 * 1000, // 5分钟

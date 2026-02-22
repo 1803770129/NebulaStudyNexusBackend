@@ -1,10 +1,3 @@
-/**
- * 主布局组件
- * 
- * 包含侧边栏导航和内容区域
- * 支持响应式布局和侧边栏折叠
- */
-
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { Layout, Menu, Button, theme, Dropdown, Avatar, Space } from 'antd'
 import type { MenuProps } from 'antd'
@@ -20,82 +13,106 @@ import {
   BookOutlined,
   TeamOutlined,
   SettingOutlined,
+  MoonOutlined,
+  SunOutlined,
+  ScheduleOutlined,
+  CheckSquareOutlined,
+  CalendarOutlined,
+  FileDoneOutlined,
+  FileSearchOutlined,
 } from '@ant-design/icons'
 import { useUIStore } from '@/stores'
 import { useAuth } from '@/hooks/useAuth'
 
 const { Header, Sider, Content } = Layout
 
-/**
- * 菜单项配置
- */
 const menuItems = [
   {
     key: '/',
     icon: <HomeOutlined />,
-    label: '首页',
+    label: 'Home',
   },
   {
     key: '/questions',
     icon: <FileTextOutlined />,
-    label: '题目管理',
+    label: 'Questions',
   },
   {
     key: '/knowledge-points',
     icon: <BookOutlined />,
-    label: '知识点管理',
+    label: 'Knowledge Points',
   },
   {
     key: '/categories',
     icon: <FolderOutlined />,
-    label: '分类管理',
+    label: 'Categories',
   },
   {
     key: '/tags',
     icon: <TagsOutlined />,
-    label: '标签管理',
+    label: 'Tags',
   },
   {
     key: '/students',
     icon: <TeamOutlined />,
-    label: '学生管理',
+    label: 'Students',
+  },
+  {
+    key: '/users',
+    icon: <UserOutlined />,
+    label: 'User & Role',
+  },
+  {
+    key: '/practice-sessions',
+    icon: <ScheduleOutlined />,
+    label: 'Practice Sessions',
+  },
+  {
+    key: '/grading-tasks',
+    icon: <CheckSquareOutlined />,
+    label: 'Manual Grading',
+  },
+  {
+    key: '/review-tasks',
+    icon: <CalendarOutlined />,
+    label: 'Review Tasks',
+  },
+  {
+    key: '/exam-papers',
+    icon: <FileDoneOutlined />,
+    label: 'Exam Papers',
+  },
+  {
+    key: '/exam-attempts',
+    icon: <FileSearchOutlined />,
+    label: 'Exam Attempts',
   },
 ]
 
-/**
- * MainLayout 组件
- * 
- * 应用的主布局，包含：
- * - 可折叠的侧边栏导航
- * - 顶部标题栏
- * - 内容区域（通过 Outlet 渲染子路由）
- */
 export function MainLayout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { sidebarCollapsed, toggleSidebar } = useUIStore()
+  const { sidebarCollapsed, toggleSidebar, currentTheme, toggleTheme } = useUIStore()
   const { user, logout } = useAuth()
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken()
+  const isDark = currentTheme === 'dark'
 
-  // 处理菜单点击
   const handleMenuClick = ({ key }: { key: string }) => {
     navigate(key)
   }
 
-  // 处理登出
   const handleLogout = () => {
     logout()
     navigate('/login')
   }
 
-  // 用户下拉菜单
   const userMenuItems: MenuProps['items'] = [
     {
       key: 'profile',
       icon: <SettingOutlined />,
-      label: '个人设置',
+      label: 'Profile',
       onClick: () => navigate('/profile'),
     },
     {
@@ -104,17 +121,17 @@ export function MainLayout() {
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: '退出登录',
+      label: 'Logout',
       onClick: handleLogout,
     },
   ]
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      {/* 侧边栏 */}
       <Sider
         trigger={null}
         collapsible
+        theme={isDark ? 'dark' : 'light'}
         collapsed={sidebarCollapsed}
         breakpoint="lg"
         onBreakpoint={(broken) => {
@@ -131,25 +148,23 @@ export function MainLayout() {
           bottom: 0,
         }}
       >
-        {/* Logo */}
         <div
           style={{
             height: 64,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#fff',
+            color: isDark ? '#fff' : 'rgba(0, 0, 0, 0.88)',
             fontSize: sidebarCollapsed ? 16 : 18,
             fontWeight: 'bold',
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            borderBottom: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(5,5,5,0.06)',
           }}
         >
-          {sidebarCollapsed ? '题库' : '题目管理系统'}
+          {sidebarCollapsed ? 'QB' : 'Question Manager'}
         </div>
 
-        {/* 导航菜单 */}
         <Menu
-          theme="dark"
+          theme={isDark ? 'dark' : 'light'}
           mode="inline"
           selectedKeys={[location.pathname]}
           items={menuItems}
@@ -157,14 +172,12 @@ export function MainLayout() {
         />
       </Sider>
 
-      {/* 主内容区 */}
       <Layout
         style={{
           marginLeft: sidebarCollapsed ? 80 : 200,
           transition: 'margin-left 0.2s',
         }}
       >
-        {/* 顶部栏 */}
         <Header
           style={{
             padding: '0 16px',
@@ -185,21 +198,25 @@ export function MainLayout() {
               onClick={toggleSidebar}
               style={{ fontSize: 16, width: 64, height: 64 }}
             />
-            <span style={{ marginLeft: 16, fontSize: 16, fontWeight: 500 }}>
-              题目后台管理系统
-            </span>
+            <span style={{ marginLeft: 16, fontSize: 16, fontWeight: 500 }}>Question Manager</span>
           </div>
-          
-          {/* 用户信息 */}
-          <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-            <Space style={{ cursor: 'pointer' }}>
-              <Avatar icon={<UserOutlined />} />
-              <span>{user?.username}</span>
-            </Space>
-          </Dropdown>
+
+          <Space size="middle">
+            <Button
+              type="text"
+              icon={isDark ? <SunOutlined /> : <MoonOutlined />}
+              onClick={toggleTheme}
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            />
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+              <Space style={{ cursor: 'pointer' }}>
+                <Avatar icon={<UserOutlined />} />
+                <span>{user?.username}</span>
+              </Space>
+            </Dropdown>
+          </Space>
         </Header>
 
-        {/* 内容区 */}
         <Content
           style={{
             margin: '24px 16px',

@@ -85,4 +85,52 @@ export const queryKeys = {
     details: () => [...queryKeys.students.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.students.details(), id] as const,
   },
+  // 员工相关
+  users: {
+    all: ['users'] as const,
+    lists: () => [...queryKeys.users.all, 'list'] as const,
+    list: (filters: Record<string, unknown>) => [...queryKeys.users.lists(), filters] as const,
+    details: () => [...queryKeys.users.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.users.details(), id] as const,
+  },
+  // 练习会话相关
+  practiceSessions: {
+    all: ['practiceSessions'] as const,
+    lists: () => [...queryKeys.practiceSessions.all, 'list'] as const,
+    list: (filters: Record<string, unknown>) =>
+      [...queryKeys.practiceSessions.lists(), filters] as const,
+    details: () => [...queryKeys.practiceSessions.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.practiceSessions.details(), id] as const,
+    current: (id: string) => [...queryKeys.practiceSessions.detail(id), 'current'] as const,
+  },
+  manualGradingTasks: {
+    all: ['manualGradingTasks'] as const,
+    lists: () => [...queryKeys.manualGradingTasks.all, 'list'] as const,
+    list: (filters: Record<string, unknown>) =>
+      [...queryKeys.manualGradingTasks.lists(), filters] as const,
+    details: () => [...queryKeys.manualGradingTasks.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.manualGradingTasks.details(), id] as const,
+  },
+  reviewTasks: {
+    all: ['reviewTasks'] as const,
+    summary: (runDate?: string) =>
+      runDate
+        ? ([...queryKeys.reviewTasks.all, 'summary', runDate] as const)
+        : ([...queryKeys.reviewTasks.all, 'summary'] as const),
+  },
+  examPapers: {
+    all: ['examPapers'] as const,
+    lists: () => [...queryKeys.examPapers.all, 'list'] as const,
+    list: (filters: Record<string, unknown>) => [...queryKeys.examPapers.lists(), filters] as const,
+    details: () => [...queryKeys.examPapers.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.examPapers.details(), id] as const,
+  },
+  examAttempts: {
+    all: ['examAttempts'] as const,
+    lists: () => [...queryKeys.examAttempts.all, 'list'] as const,
+    list: (filters: Record<string, unknown>) => [...queryKeys.examAttempts.lists(), filters] as const,
+    details: () => [...queryKeys.examAttempts.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.examAttempts.details(), id] as const,
+    timeoutSummary: () => [...queryKeys.examAttempts.all, 'timeoutSummary'] as const,
+  },
 } as const

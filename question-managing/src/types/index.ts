@@ -183,6 +183,568 @@ export interface StudentFilters {
   limit: number
 }
 
+/**
+ * 管理端用户角色
+ */
+export const AdminUserRole = {
+  ADMIN: 'admin',
+  USER: 'user',
+} as const
+
+export type AdminUserRole = (typeof AdminUserRole)[keyof typeof AdminUserRole]
+
+/**
+ * 管理端员工用户
+ */
+export interface AdminUser {
+  id: string
+  username: string
+  email: string
+  role: AdminUserRole
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * 员工筛选条件
+ */
+export interface UserFilters {
+  keyword?: string
+  role?: AdminUserRole
+  isActive?: boolean
+  page: number
+  limit: number
+}
+
+// ==================== 练习会话类型 ====================
+
+/**
+ * 练习会话模式
+ */
+export const PracticeSessionMode = {
+  RANDOM: 'random',
+  CATEGORY: 'category',
+  KNOWLEDGE: 'knowledge',
+  REVIEW: 'review',
+} as const
+
+export type PracticeSessionMode = (typeof PracticeSessionMode)[keyof typeof PracticeSessionMode]
+
+/**
+ * 练习会话状态
+ */
+export const PracticeSessionStatus = {
+  ACTIVE: 'active',
+  COMPLETED: 'completed',
+  ABANDONED: 'abandoned',
+} as const
+
+export type PracticeSessionStatus =
+  (typeof PracticeSessionStatus)[keyof typeof PracticeSessionStatus]
+
+/**
+ * 练习会话来源类型
+ */
+export const PracticeSessionItemSourceType = {
+  NORMAL: 'normal',
+  REVIEW: 'review',
+  RECOMMEND: 'recommend',
+} as const
+
+export type PracticeSessionItemSourceType =
+  (typeof PracticeSessionItemSourceType)[keyof typeof PracticeSessionItemSourceType]
+
+/**
+ * 创建练习会话请求
+ */
+export interface CreatePracticeSessionPayload {
+  mode: PracticeSessionMode
+  questionCount?: number
+  categoryId?: string
+  knowledgePointIds?: string[]
+  type?: QuestionType
+  difficulty?: DifficultyLevel
+  tagIds?: string[]
+}
+
+/**
+ * 练习会话筛选参数
+ */
+export interface PracticeSessionFilters {
+  page: number
+  pageSize: number
+  status?: PracticeSessionStatus
+  mode?: PracticeSessionMode
+}
+
+/**
+ * 绠＄悊绔細璇濈瓫閫夊弬鏁?
+ */
+export interface AdminPracticeSessionFilters extends PracticeSessionFilters {
+  studentId?: string
+  keyword?: string
+}
+
+export interface PracticeSessionWeakKnowledgePoint {
+  id: string
+  name: string
+  total: number
+  correct: number
+  correctRate: number
+}
+
+/**
+ * 练习会话摘要
+ */
+export interface PracticeSession {
+  id: string
+  studentId: string
+  mode: PracticeSessionMode
+  status: PracticeSessionStatus
+  config: Record<string, unknown>
+  totalCount: number
+  answeredCount: number
+  correctCount: number
+  correctRate: number
+  totalDuration?: number
+  weakKnowledgePoints?: PracticeSessionWeakKnowledgePoint[]
+  startedAt: string
+  endedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * 练习会话题目项
+ */
+export interface PracticeSessionItem {
+  id: string
+  questionId: string
+  seq: number
+  sourceType: PracticeSessionItemSourceType
+  sourceRefId: string | null
+  status: 'pending' | 'answered' | 'skipped'
+  answeredAt: string | null
+}
+
+/**
+ * 练习会话详情
+ */
+export interface PracticeSessionDetail extends PracticeSession {
+  nextPendingSeq: number | null
+  items: PracticeSessionItem[]
+}
+
+/**
+ * 绠＄悊绔細璇濆垪琛ㄧ敤瀛︾敓绠€瑕佷俊鎭?
+ */
+export interface PracticeSessionStudentBrief {
+  id: string
+  nickname: string
+  phone: string | null
+  avatar: string
+  isActive: boolean
+}
+
+/**
+ * 绠＄悊绔細璇濇憳瑕?
+ */
+export interface AdminPracticeSession extends PracticeSession {
+  student: PracticeSessionStudentBrief | null
+}
+
+/**
+ * 绠＄悊绔細璇︽儏
+ */
+export interface AdminPracticeSessionDetail extends PracticeSessionDetail {
+  student: PracticeSessionStudentBrief | null
+}
+
+/**
+ * 绠＄悊绔細璇濈粺璁?
+ */
+export interface AdminPracticeSessionStats {
+  totalSessions: number
+  activeSessions: number
+  completedSessions: number
+  abandonedSessions: number
+  todayCreatedSessions: number
+  avgCorrectRate: number
+  byMode: Array<{
+    mode: PracticeSessionMode
+    count: number
+  }>
+}
+
+export interface ReviewTaskSummary {
+  runDate: string
+  total: number
+  pending: number
+  done: number
+}
+
+export interface ReviewTaskGenerationResult {
+  runDate: string
+  generatedCount: number
+  trigger: 'startup' | 'timer' | 'manual'
+  attempts: number
+}
+
+export const ExamPaperStatus = {
+  DRAFT: 'draft',
+  PUBLISHED: 'published',
+} as const
+
+export type ExamPaperStatus = (typeof ExamPaperStatus)[keyof typeof ExamPaperStatus]
+
+export interface ExamPaperItemInput {
+  questionId: string
+  score: number
+}
+
+export interface ExamPaper {
+  id: string
+  title: string
+  description: string | null
+  durationMinutes: number
+  totalScore: number
+  status: ExamPaperStatus
+  publishedAt: string | null
+  createdById: string | null
+  itemCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ExamPaperDetail {
+  id: string
+  title: string
+  description: string | null
+  durationMinutes: number
+  totalScore: number
+  status: ExamPaperStatus
+  publishedAt: string | null
+  createdById: string | null
+  createdAt: string
+  updatedAt: string
+  items: Array<{
+    id: string
+    seq: number
+    questionId: string
+    score: number
+    question: {
+      id: string
+      title: string
+      type: QuestionType
+      difficulty: DifficultyLevel
+    } | null
+  }>
+}
+
+export interface ExamPaperFilters {
+  page: number
+  pageSize: number
+  status?: ExamPaperStatus
+  keyword?: string
+}
+
+export interface CreateExamPaperPayload {
+  title: string
+  description?: string
+  durationMinutes: number
+  items: ExamPaperItemInput[]
+}
+
+export const ExamAttemptStatus = {
+  ACTIVE: 'active',
+  COMPLETED: 'completed',
+  TIMEOUT: 'timeout',
+} as const
+
+export type ExamAttemptStatus = (typeof ExamAttemptStatus)[keyof typeof ExamAttemptStatus]
+
+export interface ExamAttemptPaperBrief {
+  id: string
+  title: string
+  durationMinutes: number
+  totalScore: number
+  status?: ExamPaperStatus | string
+}
+
+export interface ExamAttemptStudentBrief {
+  id: string
+  nickname: string
+  phone: string | null
+  avatar: string
+  isActive: boolean
+}
+
+export interface ExamAttemptStats {
+  totalCount: number
+  answeredCount: number
+  correctCount: number
+  pendingManualCount: number
+}
+
+export interface ExamAttemptSummary {
+  id: string
+  paperId: string
+  studentId: string
+  status: ExamAttemptStatus
+  startedAt: string
+  finishedAt: string | null
+  durationSeconds: number
+  totalScore: number | null
+  objectiveScore: number | null
+  subjectiveScore: number | null
+  needsManualGrading: boolean
+  totalCount: number
+  answeredCount: number
+  correctCount: number
+  pendingManualCount: number
+  paper: ExamAttemptPaperBrief | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AdminExamAttempt extends ExamAttemptSummary {
+  student: ExamAttemptStudentBrief | null
+}
+
+export interface AdminExamAttemptFilters {
+  page: number
+  pageSize: number
+  status?: ExamAttemptStatus
+  paperId?: string
+  studentId?: string
+  keyword?: string
+}
+
+export interface ExamAttemptReportInfo {
+  id: string
+  status: ExamAttemptStatus
+  startedAt: string
+  finishedAt: string | null
+  durationSeconds: number
+  totalScore: number | null
+  objectiveScore: number | null
+  subjectiveScore: number | null
+  needsManualGrading: boolean
+}
+
+export interface ExamAttemptReportItem {
+  id: string
+  seq: number
+  questionId: string
+  fullScore: number
+  score: number | null
+  isCorrect: boolean | null
+  needsManualGrading: boolean
+  submittedAt: string | null
+  submittedAnswer: unknown
+  question: Record<string, unknown> | null
+}
+
+export interface AdminExamAttemptDetail {
+  attempt: ExamAttemptReportInfo
+  paper: ExamAttemptPaperBrief | null
+  stats: ExamAttemptStats
+  items: ExamAttemptReportItem[]
+  student: ExamAttemptStudentBrief | null
+}
+
+export interface ExamTimeoutSummary {
+  activeCount: number
+  timeoutCount: number
+  checkedAt: string
+}
+
+export interface ExamTimeoutScanResult {
+  trigger: 'startup' | 'timer' | 'manual'
+  scannedCount: number
+  timeoutCount: number
+  autoFinishedCount: number
+  scannedAt: string
+}
+
+export interface GradeExamAttemptItemPayload {
+  score: number
+}
+
+export interface GradeExamAttemptItemResult {
+  attemptId: string
+  itemId: string
+  score: number
+  fullScore: number
+  isCorrect: boolean
+  gradedAt: string
+  attempt: {
+    status: ExamAttemptStatus
+    totalScore: number | null
+    objectiveScore: number | null
+    subjectiveScore: number | null
+    needsManualGrading: boolean
+  }
+}
+
+/**
+ * 学生端题目预览（隐藏答案）
+ */
+export const ManualGradingTaskStatus = {
+  PENDING: 'pending',
+  ASSIGNED: 'assigned',
+  DONE: 'done',
+  REOPEN: 'reopen',
+} as const
+
+export type ManualGradingTaskStatus =
+  (typeof ManualGradingTaskStatus)[keyof typeof ManualGradingTaskStatus]
+
+export interface ManualGradingTaskFilters {
+  page: number
+  pageSize: number
+  status?: ManualGradingTaskStatus
+  assigneeId?: string
+  keyword?: string
+}
+
+export interface ManualGradingTaskStudentBrief {
+  id: string
+  nickname: string
+  phone: string | null
+}
+
+export interface ManualGradingTaskQuestionBrief {
+  id: string
+  title: string
+  type: QuestionType
+}
+
+export interface ManualGradingTaskAssigneeBrief {
+  id: string
+  username: string
+}
+
+export interface ManualGradingTaskPracticeRecordBrief {
+  id: string
+  submittedAnswer: unknown
+  duration: number
+  createdAt: string
+}
+
+export interface ManualGradingTaskSummary {
+  id: string
+  practiceRecordId: string
+  status: ManualGradingTaskStatus
+  assigneeId: string | null
+  assignedAt: string | null
+  score: number | null
+  isPassed: boolean | null
+  submittedAt: string | null
+  student: ManualGradingTaskStudentBrief | null
+  question: ManualGradingTaskQuestionBrief | null
+  assignee: ManualGradingTaskAssigneeBrief | null
+  practiceRecord: ManualGradingTaskPracticeRecordBrief | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ManualGradingTaskDetail extends ManualGradingTaskSummary {
+  feedback: string | null
+  tags: string[]
+  question:
+    | (ManualGradingTaskQuestionBrief & {
+        content: RichContent | string
+        answer: string | string[] | boolean
+        explanation?: RichContent | null
+        difficulty: DifficultyLevel
+      })
+    | null
+}
+
+export interface SubmitManualGradingPayload {
+  score: number
+  isPassed: boolean
+  feedback?: string
+  tags?: string[]
+}
+
+export interface ReopenManualGradingPayload {
+  reason?: string
+}
+
+export interface PracticeQuestionPreview {
+  id: string
+  title: string
+  content: {
+    rendered: string
+  }
+  type: QuestionType
+  difficulty: DifficultyLevel
+  category?: {
+    id: string
+    name: string
+  }
+  tags?: Array<{
+    id: string
+    name: string
+  }>
+  knowledgePoints?: Array<{
+    id: string
+    name: string
+  }>
+  options?: Array<{
+    id: string
+    content: RichContent | string
+  }>
+}
+
+/**
+ * 当前会话题目响应
+ */
+export interface CurrentPracticeSessionItemResponse {
+  session: PracticeSession
+  completed: boolean
+  item: null | {
+    id: string
+    seq: number
+    status: 'pending' | 'answered' | 'skipped'
+    sourceType: PracticeSessionItemSourceType
+    sourceRefId: string | null
+    question: PracticeQuestionPreview
+  }
+}
+
+/**
+ * 会话题目提交请求
+ */
+export interface SubmitPracticeSessionItemPayload {
+  answer: string | string[] | boolean
+  duration?: number
+}
+
+/**
+ * 提交结果
+ */
+export interface PracticeSubmitResult {
+  isCorrect: boolean | null
+  correctAnswer: string | string[]
+  explanation?: RichContent | null
+  options?: Option[]
+  practiceRecordId: string
+}
+
+/**
+ * 会话题目提交响应
+ */
+export interface SubmitPracticeSessionItemResponse {
+  session: PracticeSession
+  isCompleted: boolean
+  nextItemId: string | null
+  result: PracticeSubmitResult
+}
+
 // ==================== 筛选与分页接口 ====================
 
 /**

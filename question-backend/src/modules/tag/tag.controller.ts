@@ -1,16 +1,7 @@
 /**
  * 标签控制器
  */
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  ParseUUIDPipe,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { TagService } from './tag.service';
 import { CreateTagDto, UpdateTagDto } from './dto';
@@ -49,10 +40,7 @@ export class TagController {
   @ApiResponse({ status: 200, description: '更新成功' })
   @ApiResponse({ status: 404, description: '标签不存在' })
   @ApiResponse({ status: 409, description: '标签名称重复' })
-  update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateTagDto: UpdateTagDto,
-  ) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() updateTagDto: UpdateTagDto) {
     return this.tagService.update(id, updateTagDto);
   }
 

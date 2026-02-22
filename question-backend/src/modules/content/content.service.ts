@@ -1,6 +1,6 @@
 /**
  * 内容处理服务
- * 
+ *
  * 职责：
  * 1. 解析富文本内容中的 LaTeX 公式
  * 2. 调用公式渲染服务转换公式
@@ -53,7 +53,7 @@ export class ContentService {
 
     // 先提取块级公式（避免被行内公式正则匹配）
     let match: RegExpExecArray | null;
-    
+
     // 重置正则状态
     this.blockFormulaRegex.lastIndex = 0;
     while ((match = this.blockFormulaRegex.exec(html)) !== null) {
@@ -68,9 +68,7 @@ export class ContentService {
     this.inlineFormulaRegex.lastIndex = 0;
     while ((match = this.inlineFormulaRegex.exec(html)) !== null) {
       // 检查是否是块级公式的一部分
-      const isPartOfBlock = formulas.some(
-        (f) => !f.inline && f.fullMatch.includes(match![0]),
-      );
+      const isPartOfBlock = formulas.some((f) => !f.inline && f.fullMatch.includes(match![0]));
       if (!isPartOfBlock) {
         formulas.push({
           fullMatch: match[0],
@@ -139,7 +137,7 @@ export class ContentService {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
-    
+
     const style = inline
       ? 'vertical-align: middle; display: inline;'
       : 'display: block; margin: 10px auto;';

@@ -53,6 +53,18 @@ export class WrongBook {
   @Column({ default: false })
   isMastered: boolean;
 
+  @Column({ type: 'int', default: 0 })
+  reviewLevel: number;
+
+  @Column({ type: 'timestamp', nullable: true })
+  nextReviewAt: Date | null;
+
+  @Column({ type: 'boolean', nullable: true })
+  lastReviewResult: boolean | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastReviewedAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

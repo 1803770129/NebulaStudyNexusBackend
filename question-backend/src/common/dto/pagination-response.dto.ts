@@ -1,6 +1,6 @@
 /**
  * 分页响应 DTO
- * 
+ *
  * 用于包装分页查询的响应数据
  */
 import { ApiProperty } from '@nestjs/swagger';
