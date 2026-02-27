@@ -35,8 +35,8 @@ export function QuestionFormPage() {
         message.success('创建成功')
       }
       navigate('/questions')
-    } catch (error) {
-      message.error(isEdit ? '更新失败' : '创建失败')
+    } catch (error: any) {
+      message.error(error?.message || (isEdit ? '更新失败' : '创建失败'))
     }
   }
 

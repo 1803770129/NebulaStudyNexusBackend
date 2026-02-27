@@ -1,32 +1,32 @@
 import {
+  BadRequestException,
   Controller,
   Post,
-  UseInterceptors,
   UploadedFile,
-  BadRequestException,
+  UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
-  ApiTags,
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiResponse,
-  ApiBearerAuth,
-  ApiConsumes,
-  ApiBody,
+  ApiTags,
 } from '@nestjs/swagger';
-import { UploadService } from './upload.service';
 import { Multer } from 'multer';
 import { UserType } from '@/common/decorators/user-type.decorator';
+import { UploadService } from './upload.service';
 
-@ApiTags('upload')
-@Controller('upload')
-@UserType('admin')
-export class UploadController {
+@ApiTags('student-upload')
+@ApiBearerAuth('JWT-auth')
+@Controller('student/upload')
+@UserType('student')
+export class StudentUploadController {
   constructor(private readonly uploadService: UploadService) {}
 
   @Post('image')
-  @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: '上传图片到 GitHub' })
+  @ApiOperation({ summary: 'Upload image for student app' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -35,17 +35,17 @@ export class UploadController {
         file: {
           type: 'string',
           format: 'binary',
-          description: '图片文件 (支持 jpg, png, gif, webp，最大 5MB)',
+          description: 'Image file (jpg, png, gif, webp, max 5MB)',
         },
       },
     },
   })
-  @ApiResponse({ status: 201, description: '上传成功' })
-  @ApiResponse({ status: 400, description: '文件验证失败' })
+  @ApiResponse({ status: 201, description: 'Uploaded successfully' })
+  @ApiResponse({ status: 400, description: 'File validation failed' })
   @UseInterceptors(FileInterceptor('file'))
   async uploadImage(@UploadedFile() file: Multer.File) {
     if (!file) {
-      throw new BadRequestException('请选择要上传的文件');
+      throw new BadRequestException('Please select an image file');
     }
 
     return this.uploadService.uploadImage(file.buffer, file.originalname, file.mimetype, file.size);

@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react'
 import { Form, Input, Select, Button, Space, Card, Tag } from 'antd'
 import { SearchOutlined, ReloadOutlined, CloseOutlined } from '@ant-design/icons'
 import type { QuestionFilters, Category } from '@/types'
-import { QUESTION_TYPE_OPTIONS, DIFFICULTY_OPTIONS } from '@/constants'
+import { QUESTION_TYPE_OPTIONS, DIFFICULTY_OPTIONS, QUESTION_STATUS_OPTIONS } from '@/constants'
 import { KnowledgePointSelector } from '@/components/knowledge-point/KnowledgePointSelector'
 import { knowledgePointService, type KnowledgePoint } from '@/services/knowledgePointService'
 
@@ -45,6 +45,10 @@ export function QuestionFilter({
     loadSelectedKnowledgePoints()
   }, [filters.knowledgePointIds])
 
+  useEffect(() => {
+    form.setFieldsValue(filters)
+  }, [filters, form])
+
   // 处理搜索
   const handleSearch = () => {
     const values = form.getFieldsValue()
@@ -75,6 +79,7 @@ export function QuestionFilter({
       categoryId: undefined,
       type: undefined,
       difficulty: undefined,
+      status: undefined,
     })
   }
 
@@ -83,7 +88,8 @@ export function QuestionFilter({
     (filters.knowledgePointIds && filters.knowledgePointIds.length > 0) ||
     filters.categoryId ||
     filters.type ||
-    filters.difficulty
+    filters.difficulty ||
+    filters.status
 
   return (
     <Card style={{ marginBottom: 16 }}>
@@ -134,6 +140,18 @@ export function QuestionFilter({
             allowClear
             style={{ width: 100 }}
             options={DIFFICULTY_OPTIONS.map(opt => ({
+              value: opt.value,
+              label: opt.label,
+            }))}
+          />
+        </Form.Item>
+
+        <Form.Item name="status" style={{ marginBottom: 8 }}>
+          <Select
+            placeholder="状态"
+            allowClear
+            style={{ width: 120 }}
+            options={QUESTION_STATUS_OPTIONS.map((opt) => ({
               value: opt.value,
               label: opt.label,
             }))}

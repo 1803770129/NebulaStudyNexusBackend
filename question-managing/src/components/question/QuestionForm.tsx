@@ -57,7 +57,10 @@ export function QuestionForm({
           content: getRawContent(opt.content),
           isCorrect: opt.isCorrect,
         })),
-        answer: initialValues.answer,
+        answer:
+          initialValues.type === QuestionType.FILL_BLANK && Array.isArray(initialValues.answer)
+            ? initialValues.answer.join('\n')
+            : initialValues.answer,
         explanation: getRawContent(initialValues.explanation),
       })
     } else {
@@ -113,16 +116,57 @@ export function QuestionForm({
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields()
-      
-      // 处理选择题的答案
-      if (isChoiceQuestion && values.options) {
-        const correctOptions = values.options.filter((opt: FormOption) => opt.isCorrect)
+
+      if (isChoiceQuestion) {
+        const options = values.options || []
+        const correctOptions = options.filter((opt: FormOption) => opt.isCorrect)
+
         if (questionType === QuestionType.SINGLE_CHOICE) {
+          if (correctOptions.length !== 1) {
+            form.setFields([{ name: 'options', errors: ['单选题必须且只能有一个正确选项'] }])
+            return
+          }
           values.answer = correctOptions[0]?.id || ''
         } else if (questionType === QuestionType.MULTIPLE_CHOICE) {
+          if (correctOptions.length < 2) {
+            form.setFields([{ name: 'options', errors: ['多选题至少需要两个正确选项'] }])
+            return
+          }
           values.answer = correctOptions.map((opt: FormOption) => opt.id)
         } else if (questionType === QuestionType.TRUE_FALSE) {
-          values.answer = correctOptions[0]?.content === '正确' ? 'true' : 'false'
+          if (correctOptions.length !== 1) {
+            form.setFields([{ name: 'options', errors: ['判断题必须选择一个正确选项'] }])
+            return
+          }
+          values.answer = correctOptions[0]?.id || ''
+        }
+      } else {
+        values.options = undefined
+
+        if (questionType === QuestionType.FILL_BLANK) {
+          const rawAnswer = Array.isArray(values.answer)
+            ? values.answer.join('\n')
+            : String(values.answer ?? '')
+          const answers = rawAnswer
+            .split(/\r?\n|[,，]/)
+            .map((item: string) => item.trim())
+            .filter((item: string) => item.length > 0)
+
+          if (answers.length === 0) {
+            form.setFields([{ name: 'answer', errors: ['填空题至少需要一个非空答案'] }])
+            return
+          }
+
+          values.answer = answers
+        } else if (questionType === QuestionType.SHORT_ANSWER) {
+          const answer = Array.isArray(values.answer)
+            ? values.answer.join('\n').trim()
+            : String(values.answer ?? '').trim()
+          if (!answer) {
+            form.setFields([{ name: 'answer', errors: ['简答题答案不能为空'] }])
+            return
+          }
+          values.answer = answer
         }
       }
 
@@ -140,6 +184,7 @@ export function QuestionForm({
           { id: generateShortId(), content: '正确', isCorrect: false },
           { id: generateShortId(), content: '错误', isCorrect: false },
         ],
+        answer: '',
       })
     } else if (type === QuestionType.SINGLE_CHOICE || type === QuestionType.MULTIPLE_CHOICE) {
       const currentOptions = form.getFieldValue('options')
@@ -151,15 +196,16 @@ export function QuestionForm({
           ],
         })
       }
+    } else {
+      form.setFieldsValue({
+        options: undefined,
+        answer: '',
+      })
     }
   }
 
   return (
-    <Form
-      form={form}
-      layout="vertical"
-      onFinish={handleSubmit}
-    >
+    <Form form={form} layout="vertical" onFinish={handleSubmit}>
       <Form.Item
         name="title"
         label="题目标题"
@@ -173,10 +219,7 @@ export function QuestionForm({
         label="题目内容"
         rules={[{ required: true, message: '请输入题目内容' }]}
       >
-        <RichTextEditor
-          placeholder="请输入题目内容/题干"
-          height={300}
-        />
+        <RichTextEditor placeholder="请输入题目内容/题干" height={300} />
       </Form.Item>
 
       <Space size="large" style={{ display: 'flex', flexWrap: 'wrap' }}>
@@ -274,12 +317,7 @@ export function QuestionForm({
               <>
                 {fields.map(({ key, name, ...restField }, index) => (
                   <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
-                    <Form.Item
-                      {...restField}
-                      name={[name, 'isCorrect']}
-                      valuePropName="checked"
-                      style={{ marginBottom: 0 }}
-                    >
+                    <Form.Item {...restField} name={[name, 'isCorrect']} style={{ marginBottom: 0 }}>
                       <Select
                         style={{ width: 100 }}
                         options={[
@@ -287,8 +325,11 @@ export function QuestionForm({
                           { value: false, label: '✗ 错误' },
                         ]}
                         onChange={(value) => {
-                          // 单选题只能有一个正确答案
-                          if (value && questionType === QuestionType.SINGLE_CHOICE) {
+                          if (
+                            value &&
+                            (questionType === QuestionType.SINGLE_CHOICE ||
+                              questionType === QuestionType.TRUE_FALSE)
+                          ) {
                             const options = form.getFieldValue('options')
                             const newOptions = options.map((opt: FormOption, i: number) => ({
                               ...opt,
@@ -306,10 +347,7 @@ export function QuestionForm({
                       style={{ marginBottom: 0, flex: 1, minWidth: 300 }}
                     >
                       {questionType === QuestionType.TRUE_FALSE ? (
-                        <Input
-                          placeholder={`选项 ${String.fromCharCode(65 + index)}`}
-                          disabled
-                        />
+                        <Input placeholder={`选项 ${String.fromCharCode(65 + index)}`} disabled />
                       ) : (
                         <RichTextEditor
                           placeholder={`选项 ${String.fromCharCode(65 + index)}`}
@@ -346,21 +384,27 @@ export function QuestionForm({
       {!isChoiceQuestion && (
         <Form.Item
           name="answer"
-          label="参考答案"
+          label={questionType === QuestionType.FILL_BLANK ? '参考答案（每行一个空）' : '参考答案'}
+          extra={
+            questionType === QuestionType.FILL_BLANK
+              ? '支持多行输入或用逗号分隔，系统会按数组提交'
+              : undefined
+          }
           rules={[{ required: true, message: '请输入参考答案' }]}
         >
           <TextArea
-            placeholder="请输入参考答案"
+            placeholder={
+              questionType === QuestionType.FILL_BLANK
+                ? '示例：\n牛顿第一定律\n惯性'
+                : '请输入参考答案'
+            }
             rows={3}
           />
         </Form.Item>
       )}
 
       <Form.Item name="explanation" label="答案解析">
-        <RichTextEditor
-          placeholder="请输入答案解析（可选）"
-          height={250}
-        />
+        <RichTextEditor placeholder="请输入答案解析（可选）" height={250} />
       </Form.Item>
 
       <Divider />
@@ -371,10 +415,7 @@ export function QuestionForm({
             {initialValues ? '保存修改' : '创建题目'}
           </Button>
           <Button onClick={onCancel}>取消</Button>
-          <Button 
-            icon={<MobileOutlined />} 
-            onClick={() => setPreviewVisible(true)}
-          >
+          <Button icon={<MobileOutlined />} onClick={() => setPreviewVisible(true)}>
             移动端预览
           </Button>
         </Space>

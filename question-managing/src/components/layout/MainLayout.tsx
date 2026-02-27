@@ -30,62 +30,62 @@ const menuItems = [
   {
     key: '/',
     icon: <HomeOutlined />,
-    label: 'Home',
+    label: '首页',
   },
   {
     key: '/questions',
     icon: <FileTextOutlined />,
-    label: 'Questions',
+    label: '题目',
   },
   {
     key: '/knowledge-points',
     icon: <BookOutlined />,
-    label: 'Knowledge Points',
+    label: '知识点',
   },
   {
     key: '/categories',
     icon: <FolderOutlined />,
-    label: 'Categories',
+    label: '分类',
   },
   {
     key: '/tags',
     icon: <TagsOutlined />,
-    label: 'Tags',
+    label: '标签',
   },
   {
     key: '/students',
     icon: <TeamOutlined />,
-    label: 'Students',
+    label: '学生',
   },
   {
     key: '/users',
     icon: <UserOutlined />,
-    label: 'User & Role',
+    label: '用户与角色',
   },
   {
     key: '/practice-sessions',
     icon: <ScheduleOutlined />,
-    label: 'Practice Sessions',
+    label: '练习会话',
   },
   {
     key: '/grading-tasks',
     icon: <CheckSquareOutlined />,
-    label: 'Manual Grading',
+    label: '人工批改',
   },
   {
     key: '/review-tasks',
     icon: <CalendarOutlined />,
-    label: 'Review Tasks',
+    label: '复习任务',
   },
   {
     key: '/exam-papers',
     icon: <FileDoneOutlined />,
-    label: 'Exam Papers',
+    label: '试卷',
   },
   {
     key: '/exam-attempts',
     icon: <FileSearchOutlined />,
-    label: 'Exam Attempts',
+    label: '考试作答',
   },
 ]
 
@@ -112,7 +112,7 @@ export function MainLayout() {
     {
       key: 'profile',
       icon: <SettingOutlined />,
-      label: 'Profile',
+      label: '个人中心',
       onClick: () => navigate('/profile'),
     },
     {
@@ -121,7 +121,7 @@ export function MainLayout() {
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: 'Logout',
+      label: '退出登录',
       onClick: handleLogout,
     },
   ]
@@ -160,7 +160,7 @@ export function MainLayout() {
             borderBottom: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(5,5,5,0.06)',
           }}
         >
-          {sidebarCollapsed ? 'QB' : 'Question Manager'}
+          {sidebarCollapsed ? '题管' : '题目管理系统'}
         </div>
 
         <Menu
@@ -198,7 +198,7 @@ export function MainLayout() {
               onClick={toggleSidebar}
               style={{ fontSize: 16, width: 64, height: 64 }}
             />
-            <span style={{ marginLeft: 16, fontSize: 16, fontWeight: 500 }}>Question Manager</span>
+            <span style={{ marginLeft: 16, fontSize: 16, fontWeight: 500 }}>题目管理系统</span>
           </div>
 
           <Space size="middle">
@@ -206,7 +206,7 @@ export function MainLayout() {
               type="text"
               icon={isDark ? <SunOutlined /> : <MoonOutlined />}
               onClick={toggleTheme}
-              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label={isDark ? '切换为浅色模式' : '切换为深色模式'}
             />
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
               <Space style={{ cursor: 'pointer' }}>

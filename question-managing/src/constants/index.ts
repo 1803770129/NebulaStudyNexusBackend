@@ -4,7 +4,7 @@
  * 集中管理系统中使用的所有常量，便于维护和修改
  */
 
-import { QuestionType, DifficultyLevel } from '@/types'
+import { QuestionType, DifficultyLevel, QuestionStatus } from '@/types'
 
 // ==================== 题目类型配置 ====================
 
@@ -59,6 +59,38 @@ export const DIFFICULTY_COLORS: Record<DifficultyLevel, string> = {
   [DifficultyLevel.EASY]: '#52c41a',
   [DifficultyLevel.MEDIUM]: '#faad14',
   [DifficultyLevel.HARD]: '#f5222d',
+}
+
+// ==================== 题目状态配置 ====================
+
+/**
+ * 题目状态下拉选项
+ */
+export const QUESTION_STATUS_OPTIONS = [
+  { value: QuestionStatus.DRAFT, label: '草稿' },
+  { value: QuestionStatus.REVIEWED, label: '已审核' },
+  { value: QuestionStatus.PUBLISHED, label: '已发布' },
+  { value: QuestionStatus.ARCHIVED, label: '已归档' },
+] as const
+
+/**
+ * 题目状态标签映射
+ */
+export const QUESTION_STATUS_LABELS: Record<QuestionStatus, string> = {
+  [QuestionStatus.DRAFT]: '草稿',
+  [QuestionStatus.REVIEWED]: '已审核',
+  [QuestionStatus.PUBLISHED]: '已发布',
+  [QuestionStatus.ARCHIVED]: '已归档',
+}
+
+/**
+ * 题目状态颜色映射
+ */
+export const QUESTION_STATUS_COLORS: Record<QuestionStatus, string> = {
+  [QuestionStatus.DRAFT]: 'default',
+  [QuestionStatus.REVIEWED]: 'processing',
+  [QuestionStatus.PUBLISHED]: 'success',
+  [QuestionStatus.ARCHIVED]: 'warning',
 }
 
 // ==================== 分页配置 ====================

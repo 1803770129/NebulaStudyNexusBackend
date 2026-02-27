@@ -1,17 +1,26 @@
 /**
  * 题目服务
  */
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Question, Option, RichContent } from './entities/question.entity';
-import { CreateQuestionDto, UpdateQuestionDto, QueryQuestionDto } from './dto';
-import { OptionDto } from './dto/option.dto';
+import { PaginationResponseDto } from '@/common/dto/pagination-response.dto';
 import { CategoryService } from '@/modules/category/category.service';
-import { TagService } from '@/modules/tag/tag.service';
 import { ContentService } from '@/modules/content/content.service';
 import { KnowledgePointService } from '@/modules/knowledge-point/knowledge-point.service';
-import { PaginationResponseDto } from '@/common/dto/pagination-response.dto';
+import { TagService } from '@/modules/tag/tag.service';
+import { CreateQuestionDto, QueryQuestionDto, UpdateQuestionDto } from './dto';
+import { OptionDto } from './dto/option.dto';
+import { Option, Question } from './entities/question.entity';
+import { QuestionStatus, QuestionType } from './enums';
+import { QuestionRuleEngineService } from './question-rule-engine.service';
+
+const QUESTION_STATUS_TRANSITIONS: Record<QuestionStatus, QuestionStatus[]> = {
+  [QuestionStatus.DRAFT]: [QuestionStatus.REVIEWED, QuestionStatus.ARCHIVED],
+  [QuestionStatus.REVIEWED]: [QuestionStatus.DRAFT, QuestionStatus.PUBLISHED, QuestionStatus.ARCHIVED],
+  [QuestionStatus.PUBLISHED]: [QuestionStatus.ARCHIVED],
+  [QuestionStatus.ARCHIVED]: [QuestionStatus.DRAFT],
+};
 
 @Injectable()
 export class QuestionService {
@@ -22,6 +31,7 @@ export class QuestionService {
     private readonly tagService: TagService,
     private readonly contentService: ContentService,
     private readonly knowledgePointService: KnowledgePointService,
+    private readonly questionRuleEngine: QuestionRuleEngineService,
   ) {}
 
   /**
@@ -44,6 +54,53 @@ export class QuestionService {
     return processedOptions;
   }
 
+  private extractOptionRulesFromEntity(question: Question): Array<{ id: string; isCorrect: boolean }> {
+    return (question.options ?? []).map((option) => ({
+      id: option.id,
+      isCorrect: option.isCorrect,
+    }));
+  }
+
+  private extractOptionRulesFromDto(options?: OptionDto[]): Array<{ id: string; isCorrect: boolean }> {
+    return (options ?? []).map((option) => ({
+      id: option.id,
+      isCorrect: option.isCorrect,
+    }));
+  }
+
+  private typeSupportsOptions(type: QuestionType): boolean {
+    return (
+      type === QuestionType.SINGLE_CHOICE ||
+      type === QuestionType.MULTIPLE_CHOICE ||
+      type === QuestionType.TRUE_FALSE
+    );
+  }
+
+  private clearWorkflowMetadata(question: Question): void {
+    question.reviewedAt = null;
+    question.reviewedById = null;
+    question.publishedAt = null;
+    question.publishedById = null;
+    question.archivedAt = null;
+    question.archivedById = null;
+  }
+
+  private ensureQuestionRules(type: QuestionType, answer: string | string[], optionRules: OptionDto[]): void {
+    this.questionRuleEngine.validateOrThrow({
+      type,
+      answer,
+      options: this.extractOptionRulesFromDto(optionRules),
+    });
+  }
+
+  private ensureQuestionRulesFromEntity(question: Question): void {
+    this.questionRuleEngine.validateOrThrow({
+      type: question.type,
+      answer: question.answer as string | string[],
+      options: this.extractOptionRulesFromEntity(question),
+    });
+  }
+
   /**
    * 创建题目
    */
@@ -55,42 +112,48 @@ export class QuestionService {
       content,
       explanation,
       options,
+      type,
+      answer,
       ...questionData
     } = createQuestionDto;
 
-    // 验证分类存在
+    this.ensureQuestionRules(type, answer, options ?? []);
+
     await this.categoryService.findById(categoryId);
 
-    // 获取标签
     const tags = tagIds ? await this.tagService.findByIds(tagIds) : [];
-
-    // 获取知识点
     const knowledgePoints = knowledgePointIds
       ? await this.knowledgePointService.findByIds(knowledgePointIds)
       : [];
 
-    // 处理富文本内容
     const processedContent = await this.contentService.processContent(content);
     const processedExplanation = explanation
       ? await this.contentService.processContent(explanation)
       : null;
     const processedOptions = await this.processOptions(options);
 
-    // 创建题目
     const question = this.questionRepository.create({
       ...questionData,
+      type,
+      answer,
       content: processedContent,
       explanation: processedExplanation,
-      options: processedOptions,
+      options: processedOptions ?? null,
       categoryId,
       tags,
       knowledgePoints,
       creatorId,
+      status: QuestionStatus.DRAFT,
+      reviewedAt: null,
+      reviewedById: null,
+      publishedAt: null,
+      publishedById: null,
+      archivedAt: null,
+      archivedById: null,
     });
 
     const savedQuestion = await this.questionRepository.save(question);
 
-    // 更新分类和标签的题目数量
     await this.categoryService.updateQuestionCount(categoryId, 1);
     if (tagIds && tagIds.length > 0) {
       await this.tagService.updateQuestionCounts(tagIds, 1);
@@ -103,7 +166,7 @@ export class QuestionService {
   }
 
   /**
-   * 分页查询题目（返回 rendered 内容用于展示）
+   * 分页查询题目
    */
   async findAll(queryDto: QueryQuestionDto): Promise<PaginationResponseDto<Question>> {
     const {
@@ -113,6 +176,7 @@ export class QuestionService {
       categoryId,
       type,
       difficulty,
+      status,
       tagIds,
       knowledgePointIds,
     } = queryDto;
@@ -124,7 +188,6 @@ export class QuestionService {
       .leftJoinAndSelect('question.knowledgePoints', 'knowledgePoints')
       .leftJoinAndSelect('question.creator', 'creator');
 
-    // 关键词搜索（搜索 raw 内容）
     if (keyword) {
       queryBuilder.andWhere(
         "(question.title ILIKE :keyword OR question.content->>'raw' ILIKE :keyword)",
@@ -132,22 +195,22 @@ export class QuestionService {
       );
     }
 
-    // 分类筛选
     if (categoryId) {
       queryBuilder.andWhere('question.categoryId = :categoryId', { categoryId });
     }
 
-    // 类型筛选
     if (type) {
       queryBuilder.andWhere('question.type = :type', { type });
     }
 
-    // 难度筛选
     if (difficulty) {
       queryBuilder.andWhere('question.difficulty = :difficulty', { difficulty });
     }
 
-    // 标签筛选
+    if (status) {
+      queryBuilder.andWhere('question.status = :status', { status });
+    }
+
     if (tagIds && tagIds.length > 0) {
       queryBuilder
         .andWhere((qb) => {
@@ -162,28 +225,21 @@ export class QuestionService {
         .setParameter('tagIds', tagIds);
     }
 
-    // 知识点筛选
     if (knowledgePointIds && knowledgePointIds.length > 0) {
       queryBuilder
         .innerJoin('question.knowledgePoints', 'kp')
         .andWhere('kp.id IN (:...knowledgePointIds)', { knowledgePointIds });
     }
 
-    // 排序
     queryBuilder.orderBy('question.createdAt', 'DESC');
+    queryBuilder.skip((page - 1) * pageSize).take(pageSize);
 
-    // 分页
-    const skip = (page - 1) * pageSize;
-    queryBuilder.skip(skip).take(pageSize);
-
-    // 执行查询
     const [data, total] = await queryBuilder.getManyAndCount();
-
     return new PaginationResponseDto(data, total, page, pageSize);
   }
 
   /**
-   * 根据 ID 查找题目（返回完整内容，包含 raw 和 rendered）
+   * 根据 ID 查询题目
    */
   async findById(id: string): Promise<Question> {
     const question = await this.questionRepository.findOne({
@@ -199,7 +255,7 @@ export class QuestionService {
   }
 
   /**
-   * 根据 ID 查找题目用于编辑（返回 raw 内容）
+   * 根据 ID 查询题目用于编辑
    */
   async findByIdForEdit(id: string): Promise<Question> {
     return this.findById(id);
@@ -210,10 +266,43 @@ export class QuestionService {
    */
   async update(id: string, updateQuestionDto: UpdateQuestionDto): Promise<Question> {
     const question = await this.findById(id);
-    const { tagIds, categoryId, knowledgePointIds, content, explanation, options, ...updateData } =
-      updateQuestionDto;
 
-    // 如果更改分类
+    if (question.status === QuestionStatus.PUBLISHED) {
+      throw new ConflictException('已发布题目不允许直接修改，请先归档后再处理');
+    }
+    if (question.status === QuestionStatus.ARCHIVED) {
+      throw new ConflictException('已归档题目不允许修改');
+    }
+
+    const {
+      tagIds,
+      categoryId,
+      knowledgePointIds,
+      content,
+      explanation,
+      options,
+      type,
+      answer,
+      ...updateData
+    } = updateQuestionDto;
+
+    const nextType = type ?? question.type;
+    const nextAnswer = (answer ?? question.answer) as string | string[];
+    let nextOptionRules: Array<{ id: string; isCorrect: boolean }>;
+    if (options !== undefined) {
+      nextOptionRules = this.extractOptionRulesFromDto(options);
+    } else if (this.typeSupportsOptions(nextType)) {
+      nextOptionRules = this.extractOptionRulesFromEntity(question);
+    } else {
+      nextOptionRules = [];
+    }
+
+    this.questionRuleEngine.validateOrThrow({
+      type: nextType,
+      answer: nextAnswer,
+      options: nextOptionRules,
+    });
+
     if (categoryId && categoryId !== question.categoryId) {
       await this.categoryService.findById(categoryId);
       await this.categoryService.updateQuestionCount(question.categoryId, -1);
@@ -221,14 +310,12 @@ export class QuestionService {
       question.categoryId = categoryId;
     }
 
-    // 如果更改标签
     if (tagIds !== undefined) {
-      const oldTagIds = question.tags.map((t) => t.id);
+      const oldTagIds = question.tags.map((tag) => tag.id);
       const newTags = await this.tagService.findByIds(tagIds);
 
-      // 更新标签计数
-      const removedTagIds = oldTagIds.filter((id) => !tagIds.includes(id));
-      const addedTagIds = tagIds.filter((id) => !oldTagIds.includes(id));
+      const removedTagIds = oldTagIds.filter((tagId) => !tagIds.includes(tagId));
+      const addedTagIds = tagIds.filter((tagId) => !oldTagIds.includes(tagId));
 
       if (removedTagIds.length > 0) {
         await this.tagService.updateQuestionCounts(removedTagIds, -1);
@@ -240,14 +327,12 @@ export class QuestionService {
       question.tags = newTags;
     }
 
-    // 如果更改知识点
     if (knowledgePointIds !== undefined) {
-      const oldKpIds = question.knowledgePoints.map((kp) => kp.id);
+      const oldKnowledgePointIds = question.knowledgePoints.map((kp) => kp.id);
       const newKnowledgePoints = await this.knowledgePointService.findByIds(knowledgePointIds);
 
-      // 更新知识点计数
-      const removedKpIds = oldKpIds.filter((id) => !knowledgePointIds.includes(id));
-      const addedKpIds = knowledgePointIds.filter((id) => !oldKpIds.includes(id));
+      const removedKpIds = oldKnowledgePointIds.filter((kpId) => !knowledgePointIds.includes(kpId));
+      const addedKpIds = knowledgePointIds.filter((kpId) => !oldKnowledgePointIds.includes(kpId));
 
       if (removedKpIds.length > 0) {
         await this.knowledgePointService.updateQuestionCounts(removedKpIds, -1);
@@ -259,7 +344,6 @@ export class QuestionService {
       question.knowledgePoints = newKnowledgePoints;
     }
 
-    // 处理富文本内容
     if (content !== undefined) {
       question.content = await this.contentService.processContent(content);
     }
@@ -272,11 +356,73 @@ export class QuestionService {
 
     if (options !== undefined) {
       question.options = (await this.processOptions(options)) ?? null;
+    } else if (!this.typeSupportsOptions(nextType)) {
+      question.options = null;
     }
 
-    // 更新其他字段
-    Object.assign(question, updateData);
+    Object.assign(question, updateData, {
+      type: nextType,
+      answer: nextAnswer,
+    });
 
+    if (question.status === QuestionStatus.REVIEWED) {
+      question.status = QuestionStatus.DRAFT;
+      this.clearWorkflowMetadata(question);
+    }
+
+    return this.questionRepository.save(question);
+  }
+
+  /**
+   * 变更题目状态（审核/发布/归档）
+   */
+  async changeStatus(id: string, targetStatus: QuestionStatus, operatorId: string): Promise<Question> {
+    const question = await this.findById(id);
+
+    if (question.status === targetStatus) {
+      return question;
+    }
+
+    const allowedTransitions = QUESTION_STATUS_TRANSITIONS[question.status] ?? [];
+    if (!allowedTransitions.includes(targetStatus)) {
+      throw new ConflictException(`不允许从 ${question.status} 变更到 ${targetStatus}`);
+    }
+
+    if (targetStatus === QuestionStatus.REVIEWED || targetStatus === QuestionStatus.PUBLISHED) {
+      this.ensureQuestionRulesFromEntity(question);
+    }
+
+    const now = new Date();
+    switch (targetStatus) {
+      case QuestionStatus.DRAFT:
+        this.clearWorkflowMetadata(question);
+        break;
+      case QuestionStatus.REVIEWED:
+        question.reviewedAt = now;
+        question.reviewedById = operatorId;
+        question.publishedAt = null;
+        question.publishedById = null;
+        question.archivedAt = null;
+        question.archivedById = null;
+        break;
+      case QuestionStatus.PUBLISHED:
+        if (!question.reviewedAt) {
+          throw new ConflictException('题目未审核，不能发布');
+        }
+        question.publishedAt = now;
+        question.publishedById = operatorId;
+        question.archivedAt = null;
+        question.archivedById = null;
+        break;
+      case QuestionStatus.ARCHIVED:
+        question.archivedAt = now;
+        question.archivedById = operatorId;
+        break;
+      default:
+        throw new ConflictException('不支持的状态变更');
+    }
+
+    question.status = targetStatus;
     return this.questionRepository.save(question);
   }
 
@@ -286,17 +432,20 @@ export class QuestionService {
   async remove(id: string): Promise<void> {
     const question = await this.findById(id);
 
-    // 更新分类和标签的题目数量
+    if (question.status === QuestionStatus.PUBLISHED) {
+      throw new ConflictException('已发布题目不能直接删除，请先归档');
+    }
+
     await this.categoryService.updateQuestionCount(question.categoryId, -1);
-    const tagIds = question.tags.map((t) => t.id);
+
+    const tagIds = question.tags.map((tag) => tag.id);
     if (tagIds.length > 0) {
       await this.tagService.updateQuestionCounts(tagIds, -1);
     }
 
-    // 更新知识点的题目数量
-    const kpIds = question.knowledgePoints.map((kp) => kp.id);
-    if (kpIds.length > 0) {
-      await this.knowledgePointService.updateQuestionCounts(kpIds, -1);
+    const knowledgePointIds = question.knowledgePoints.map((kp) => kp.id);
+    if (knowledgePointIds.length > 0) {
+      await this.knowledgePointService.updateQuestionCounts(knowledgePointIds, -1);
     }
 
     await this.questionRepository.remove(question);

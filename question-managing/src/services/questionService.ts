@@ -58,6 +58,11 @@ interface TagApiResponse {
   name: string;
 }
 
+interface KnowledgePointApiResponse {
+  id: string;
+  name: string;
+}
+
 /**
  * API 返回的题目格式
  */
@@ -67,11 +72,19 @@ interface QuestionApiResponse {
   content: RichContent;
   type: Question['type'];
   difficulty: Question['difficulty'];
+  status: Exclude<Question['status'], undefined>;
   categoryId: string;
   tags?: TagApiResponse[];  // 后端返回的是 tags 对象数组
+  knowledgePoints?: KnowledgePointApiResponse[];
   options?: OptionApiResponse[];
   answer: string | string[];
   explanation?: RichContent;
+  reviewedAt?: string | null;
+  reviewedById?: string | null;
+  publishedAt?: string | null;
+  publishedById?: string | null;
+  archivedAt?: string | null;
+  archivedById?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -113,6 +126,7 @@ interface QueryQuestionParams {
   categoryId?: string;
   type?: Question['type'];
   difficulty?: Question['difficulty'];
+  status?: Exclude<Question['status'], undefined>;
   tagIds?: string[];
   knowledgePointIds?: string[];
 }
@@ -144,11 +158,19 @@ function convertApiResponseToQuestion(api: QuestionApiResponse): Question {
     content: api.content,
     type: api.type,
     difficulty: api.difficulty,
+    status: api.status ?? 'draft',
     categoryId: api.categoryId,
     tagIds: api.tags?.map(tag => tag.id) || [],  // 从 tags 对象数组提取 id
+    knowledgePointIds: api.knowledgePoints?.map(kp => kp.id) || [],
     options: api.options?.map(convertApiOptionToOption),
     answer: api.answer,
     explanation: api.explanation,
+    reviewedAt: api.reviewedAt ?? null,
+    reviewedById: api.reviewedById ?? null,
+    publishedAt: api.publishedAt ?? null,
+    publishedById: api.publishedById ?? null,
+    archivedAt: api.archivedAt ?? null,
+    archivedById: api.archivedById ?? null,
     createdAt: api.createdAt,
     updatedAt: api.updatedAt,
   };
@@ -258,6 +280,9 @@ export async function getQuestions(
   if (filters.difficulty) {
     params.difficulty = filters.difficulty;
   }
+  if (filters.status) {
+    params.status = filters.status;
+  }
   if (filters.tagIds && filters.tagIds.length > 0) {
     params.tagIds = filters.tagIds;
   }
@@ -358,6 +383,32 @@ export async function updateQuestion(id: string, data: QuestionFormValues): Prom
     const request = convertFormValuesToRequest(data);
     // 后端返回 { statusCode, message, data: QuestionApiResponse }
     const response = await api.patch<{ data: QuestionApiResponse }>(`/questions/${id}`, request);
+    return convertApiResponseToQuestion(response.data);
+  } catch (error) {
+    if (error instanceof ApiError && error.statusCode === 404) {
+      throw new ServiceError(ErrorType.NOT_FOUND, '题目不存在', 'id');
+    }
+    throw error;
+  }
+}
+
+/**
+ * 变更题目状态
+ *
+ * @param id - 题目 ID
+ * @param status - 目标状态
+ * @returns 更新后的题目
+ */
+export async function changeQuestionStatus(
+  id: string,
+  status: Exclude<Question['status'], undefined>
+): Promise<Question> {
+  const api = getApiClient();
+
+  try {
+    const response = await api.patch<{ data: QuestionApiResponse }>(`/questions/${id}/status`, {
+      status,
+    });
     return convertApiResponseToQuestion(response.data);
   } catch (error) {
     if (error instanceof ApiError && error.statusCode === 404) {

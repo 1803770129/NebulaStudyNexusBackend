@@ -41,6 +41,18 @@ export const DifficultyLevel = {
 
 export type DifficultyLevel = (typeof DifficultyLevel)[keyof typeof DifficultyLevel]
 
+/**
+ * 题目审核发布状态枚举
+ */
+export const QuestionStatus = {
+  DRAFT: 'draft',
+  REVIEWED: 'reviewed',
+  PUBLISHED: 'published',
+  ARCHIVED: 'archived',
+} as const
+
+export type QuestionStatus = (typeof QuestionStatus)[keyof typeof QuestionStatus]
+
 // ==================== 基础接口定义 ====================
 
 /**
@@ -82,6 +94,8 @@ export interface Question {
   type: QuestionType
   /** 难度等级 */
   difficulty: DifficultyLevel
+  /** 题目状态 */
+  status?: QuestionStatus
   /** 所属分类ID */
   categoryId: string
   /** 关联的标签ID列表 */
@@ -94,6 +108,18 @@ export interface Question {
   answer: string | string[]
   /** 答案解析（支持富文本） */
   explanation?: string | RichContent
+  /** 审核时间 */
+  reviewedAt?: string | null
+  /** 审核人ID */
+  reviewedById?: string | null
+  /** 发布时间 */
+  publishedAt?: string | null
+  /** 发布人ID */
+  publishedById?: string | null
+  /** 归档时间 */
+  archivedAt?: string | null
+  /** 归档人ID */
+  archivedById?: string | null
   /** 创建时间 ISO 格式 */
   createdAt: string
   /** 更新时间 ISO 格式 */
@@ -760,6 +786,8 @@ export interface QuestionFilters {
   type?: QuestionType
   /** 难度筛选 */
   difficulty?: DifficultyLevel
+  /** 题目状态筛选 */
+  status?: QuestionStatus
   /** 标签ID列表筛选 */
   tagIds?: string[]
   /** 知识点ID列表筛选 */

@@ -5,10 +5,11 @@ import { KnowledgePointController } from './knowledge-point.controller';
 import { KnowledgePointService } from './knowledge-point.service';
 import { CategoryModule } from '@/modules/category/category.module';
 import { TagModule } from '@/modules/tag/tag.module';
+import { StudentKnowledgePointController } from './student-knowledge-point.controller';
 
 @Module({
   imports: [TypeOrmModule.forFeature([KnowledgePoint]), CategoryModule, TagModule],
-  controllers: [KnowledgePointController],
+  controllers: [KnowledgePointController, StudentKnowledgePointController],
   providers: [KnowledgePointService],
   exports: [KnowledgePointService],
 })

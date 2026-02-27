@@ -188,11 +188,11 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       beforeUpload: (file) => {
         const isValidType = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type);
         if (!isValidType) {
-          message.error('只支持 JPG、PNG、GIF、WEBP 格式的图片');
+          message.error('仅支持上传常见图片格式');
           return false;
         }
         if (file.size / 1024 / 1024 > 10) {
-          message.error('图片大小不能超过 10MB');
+          message.error('图片大小不能超过 10 兆');
           return false;
         }
         handleImageSelect(file);
@@ -431,7 +431,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
             <div>
               <div style={{ marginBottom: 8 }}>链接地址：</div>
               <Input
-                placeholder="请输入链接地址，如：https://example.com"
+                placeholder="请输入完整链接地址"
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value)}
               />

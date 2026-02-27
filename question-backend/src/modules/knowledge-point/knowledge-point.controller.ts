@@ -14,10 +14,12 @@ import { KnowledgePointService } from './knowledge-point.service';
 import { CreateKnowledgePointDto } from './dto/create-knowledge-point.dto';
 import { UpdateKnowledgePointDto } from './dto/update-knowledge-point.dto';
 import { QueryKnowledgePointDto } from './dto/query-knowledge-point.dto';
+import { UserType } from '@/common/decorators/user-type.decorator';
 
 @ApiTags('knowledge-points')
 @ApiBearerAuth('JWT-auth')
 @Controller('knowledge-points')
+@UserType('admin')
 export class KnowledgePointController {
   constructor(private readonly kpService: KnowledgePointService) {}
 

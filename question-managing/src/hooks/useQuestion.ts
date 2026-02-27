@@ -16,9 +16,10 @@ import {
   getQuestionById,
   createQuestion,
   updateQuestion,
+  changeQuestionStatus,
   deleteQuestion,
 } from '@/services/questionService'
-import type { Question, QuestionFormValues, AppError } from '@/types'
+import type { Question, QuestionFormValues, AppError, QuestionStatus } from '@/types'
 
 /**
  * useQuestion Hook
@@ -91,6 +92,16 @@ export function useQuestion(id?: string) {
     },
   })
 
+  // 变更题目状态
+  const changeStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: QuestionStatus }) =>
+      changeQuestionStatus(id, status),
+    onSuccess: (updatedQuestion: Question) => {
+      queryClient.setQueryData(queryKeys.questions.detail(updatedQuestion.id), updatedQuestion)
+      queryClient.invalidateQueries({ queryKey: queryKeys.questions.lists() })
+    },
+  })
+
   return {
     // 查询结果
     question: query.data ?? null,
@@ -114,5 +125,11 @@ export function useQuestion(id?: string) {
     remove: deleteMutation.mutateAsync,
     isDeleting: deleteMutation.isPending,
     deleteError: deleteMutation.error as AppError | null,
+
+    // 状态流操作
+    changeStatus: (questionId: string, status: QuestionStatus) =>
+      changeStatusMutation.mutateAsync({ id: questionId, status }),
+    isChangingStatus: changeStatusMutation.isPending,
+    changeStatusError: changeStatusMutation.error as AppError | null,
   }
 }

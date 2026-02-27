@@ -58,18 +58,18 @@ export function UserManagePage() {
   const handleRoleChange = async (id: string, nextRole: AdminUserRole) => {
     try {
       await updateRole(id, nextRole)
-      message.success('Role updated')
+      message.success('角色更新成功')
     } catch {
-      message.error('Failed to update role')
+      message.error('角色更新失败')
     }
   }
 
   const handleToggleStatus = async (id: string, currentActive: boolean) => {
     try {
       await updateStatus(id, !currentActive)
-      message.success(currentActive ? 'User disabled' : 'User enabled')
+      message.success(currentActive ? '用户已禁用' : '用户已启用')
     } catch {
-      message.error('Failed to update status')
+      message.error('状态更新失败')
     }
   }
 
@@ -83,40 +83,40 @@ export function UserManagePage() {
     try {
       const values = await passwordForm.validateFields()
       await resetPassword(resetUserId, values.newPassword)
-      message.success('Password reset successfully')
+      message.success('密码重置成功')
       setPasswordModalOpen(false)
       setResetUserId('')
     } catch {
-      message.error('Failed to reset password')
+      message.error('密码重置失败')
     }
   }
 
   const handleDelete = async (id: string) => {
     try {
       await remove(id)
-      message.success('Deleted successfully')
+      message.success('删除成功')
     } catch {
-      message.error('Delete failed')
+      message.error('删除失败')
     }
   }
 
   const columns: ColumnsType<AdminUser> = [
     {
-      title: 'Username',
+      title: '用户名',
       dataIndex: 'username',
       key: 'username',
       width: 150,
       ellipsis: true,
     },
     {
-      title: 'Email',
+      title: '邮箱',
       dataIndex: 'email',
       key: 'email',
       width: 220,
       ellipsis: true,
     },
     {
-      title: 'Role',
+      title: '角色',
       dataIndex: 'role',
       key: 'role',
       width: 160,
@@ -129,30 +129,30 @@ export function UserManagePage() {
             disabled={isSelf || isUpdatingRole}
             onChange={(nextRole) => void handleRoleChange(record.id, nextRole)}
             options={[
-              { label: 'Admin', value: AdminUserRole.ADMIN },
-              { label: 'User', value: AdminUserRole.USER },
+              { label: '管理员', value: AdminUserRole.ADMIN },
+              { label: '用户', value: AdminUserRole.USER },
             ]}
           />
         )
       },
     },
     {
-      title: 'Status',
+      title: '状态',
       dataIndex: 'isActive',
       key: 'isActive',
       width: 130,
       render: (active: boolean) =>
-        active ? <Tag color="success">Active</Tag> : <Tag color="error">Disabled</Tag>,
+        active ? <Tag color="success">启用</Tag> : <Tag color="error">禁用</Tag>,
     },
     {
-      title: 'Created At',
+      title: '创建时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 180,
       render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm'),
     },
     {
-      title: 'Actions',
+      title: '操作',
       key: 'action',
       width: 280,
       render: (_, record) => {
@@ -161,8 +161,8 @@ export function UserManagePage() {
           <Space>
             <Switch
               checked={record.isActive}
-              checkedChildren="Enable"
-              unCheckedChildren="Disable"
+              checkedChildren="启用"
+              unCheckedChildren="禁用"
               disabled={isSelf}
               loading={isUpdatingStatus}
               onChange={() => void handleToggleStatus(record.id, record.isActive)}
@@ -175,14 +175,14 @@ export function UserManagePage() {
               loading={isResettingPassword}
               onClick={() => openResetPasswordModal(record.id)}
             >
-              Reset Password
+              重置密码
             </Button>
             <Popconfirm
-              title="Delete this user?"
-              description="This action cannot be undone."
+              title="确定删除该用户吗？"
+              description="删除后不可恢复。"
               onConfirm={() => void handleDelete(record.id)}
-              okText="Delete"
-              cancelText="Cancel"
+              okText="删除"
+              cancelText="取消"
               disabled={isSelf}
             >
               <Button
@@ -193,7 +193,7 @@ export function UserManagePage() {
                 disabled={isSelf}
                 loading={isDeleting}
               >
-                Delete
+                删除
               </Button>
             </Popconfirm>
           </Space>
@@ -212,13 +212,13 @@ export function UserManagePage() {
           alignItems: 'center',
         }}
       >
-        <h2 style={{ margin: 0 }}>User & Role Management</h2>
+        <h2 style={{ margin: 0 }}>用户与角色管理</h2>
       </div>
 
       <Card style={{ marginBottom: 16 }}>
         <Space wrap>
           <Input
-            placeholder="Search username or email"
+            placeholder="搜索用户名或邮箱"
             prefix={<SearchOutlined />}
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
@@ -227,7 +227,7 @@ export function UserManagePage() {
             allowClear
           />
           <Select<AdminUserRole | undefined>
-            placeholder="Role"
+            placeholder="角色"
             value={role}
             onChange={(val) => {
               setRole(val)
@@ -236,12 +236,12 @@ export function UserManagePage() {
             allowClear
             style={{ width: 140 }}
             options={[
-              { label: 'Admin', value: AdminUserRole.ADMIN },
-              { label: 'User', value: AdminUserRole.USER },
+              { label: '管理员', value: AdminUserRole.ADMIN },
+              { label: '用户', value: AdminUserRole.USER },
             ]}
           />
           <Select<string>
-            placeholder="Status"
+            placeholder="状态"
             value={statusValue}
             onChange={(val) => {
               setIsActive(val === 'active' ? true : val === 'disabled' ? false : undefined)
@@ -250,12 +250,12 @@ export function UserManagePage() {
             allowClear
             style={{ width: 140 }}
             options={[
-              { label: 'Active', value: 'active' },
-              { label: 'Disabled', value: 'disabled' },
+              { label: '启用', value: 'active' },
+              { label: '禁用', value: 'disabled' },
             ]}
           />
           <Button type="primary" onClick={handleSearch}>
-            Search
+            查询
           </Button>
         </Space>
       </Card>
@@ -272,7 +272,7 @@ export function UserManagePage() {
             total,
             showSizeChanger: true,
             showQuickJumper: true,
-            showTotal: (t) => `Total ${t} users`,
+            showTotal: (t) => `共 ${t} 个用户`,
             onChange: (p, s) => {
               setPage(p)
               setLimit(s)
@@ -282,24 +282,24 @@ export function UserManagePage() {
       </Card>
 
       <Modal
-        title="Reset User Password"
+        title="重置用户密码"
         open={passwordModalOpen}
         onOk={() => void handleResetPassword()}
         onCancel={() => setPasswordModalOpen(false)}
         confirmLoading={isResettingPassword}
-        okText="Reset"
-        cancelText="Cancel"
+        okText="重置"
+        cancelText="取消"
       >
         <Form form={passwordForm} layout="vertical">
           <Form.Item
             name="newPassword"
-            label="New Password"
+            label="新密码"
             rules={[
-              { required: true, message: 'Please enter a new password' },
-              { min: 6, message: 'Password must be at least 6 characters' },
+              { required: true, message: '请输入新密码' },
+              { min: 6, message: '密码长度至少为 6 位' },
             ]}
           >
-            <Input.Password placeholder="Enter new password" />
+            <Input.Password placeholder="请输入新密码" />
           </Form.Item>
         </Form>
       </Modal>

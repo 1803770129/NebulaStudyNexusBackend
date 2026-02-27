@@ -7,6 +7,7 @@ import { Transform } from 'class-transformer';
 import { PaginationQueryDto } from '@/common/dto/pagination-query.dto';
 import { QuestionType } from '../enums/question-type.enum';
 import { DifficultyLevel } from '../enums/difficulty-level.enum';
+import { QuestionStatus } from '../enums/question-status.enum';
 
 export class QueryQuestionDto extends PaginationQueryDto {
   @ApiPropertyOptional({ description: '搜索关键词' })
@@ -28,6 +29,11 @@ export class QueryQuestionDto extends PaginationQueryDto {
   @IsEnum(DifficultyLevel, { message: '无效的难度等级' })
   @IsOptional()
   difficulty?: DifficultyLevel;
+
+  @ApiPropertyOptional({ description: '题目状态', enum: QuestionStatus })
+  @IsEnum(QuestionStatus, { message: '无效的题目状态' })
+  @IsOptional()
+  status?: QuestionStatus;
 
   @ApiPropertyOptional({ description: '标签ID列表', type: [String] })
   @IsArray()

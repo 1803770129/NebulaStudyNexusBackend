@@ -16,6 +16,7 @@ const defaultFilters: QuestionFilters = {
   categoryId: undefined,
   type: undefined,
   difficulty: undefined,
+  status: undefined,
   tagIds: undefined,
   knowledgePointIds: undefined,
   page: DEFAULT_PAGINATION.page,

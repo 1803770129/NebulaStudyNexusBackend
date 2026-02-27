@@ -74,6 +74,10 @@ async function bootstrap() {
     .addTag('questions', '题目管理')
     .addTag('categories', '分类管理')
     .addTag('tags', '标签管理')
+    .addTag('student-categories', '学生端分类字典')
+    .addTag('student-tags', '学生端标签字典')
+    .addTag('student-knowledge-points', '学生端知识点字典')
+    .addTag('student-upload', '学生端图片上传')
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);

@@ -5,10 +5,12 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe } from
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { TagService } from './tag.service';
 import { CreateTagDto, UpdateTagDto } from './dto';
+import { UserType } from '@/common/decorators/user-type.decorator';
 
 @ApiTags('tags')
 @ApiBearerAuth('JWT-auth')
 @Controller('tags')
+@UserType('admin')
 export class TagController {
   constructor(private readonly tagService: TagService) {}
 

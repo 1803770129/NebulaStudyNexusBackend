@@ -187,7 +187,7 @@ export function ManualGradingManagePage() {
 
   const columns: ColumnsType<ManualGradingTaskSummary> = [
     {
-      title: '任务 ID',
+      title: '任务编号',
       dataIndex: 'id',
       key: 'id',
       width: 220,
@@ -368,7 +368,7 @@ export function ManualGradingManagePage() {
           {!detail ? null : (
             <>
               <Descriptions bordered column={2} size="small" style={{ marginBottom: 16 }}>
-                <Descriptions.Item label="任务 ID" span={2}>
+                <Descriptions.Item label="任务编号" span={2}>
                   {detail.id}
                 </Descriptions.Item>
                 <Descriptions.Item label="状态">

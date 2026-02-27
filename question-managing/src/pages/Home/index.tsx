@@ -18,28 +18,28 @@ export function HomePage() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24 }}>Welcome to Question Manager</h2>
+      <h2 style={{ marginBottom: 24 }}>欢迎使用题目管理系统</h2>
 
       <Row gutter={16}>
         <Col xs={24} sm={12} lg={6}>
           <Card>
-            <Statistic title="Total Questions" value={questionCount} prefix={<FileTextOutlined />} />
+            <Statistic title="题目总数" value={questionCount} prefix={<FileTextOutlined />} />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card>
-            <Statistic title="Categories" value={categories.length} prefix={<FolderOutlined />} />
+            <Statistic title="分类数量" value={categories.length} prefix={<FolderOutlined />} />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card>
-            <Statistic title="Tags" value={tags.length} prefix={<TagsOutlined />} />
+            <Statistic title="标签数量" value={tags.length} prefix={<TagsOutlined />} />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Today Pending Review"
+              title="今日待复习"
               value={reviewSummary?.pending ?? 0}
               prefix={<CalendarOutlined />}
             />

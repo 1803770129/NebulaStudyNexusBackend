@@ -5,10 +5,12 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe } from
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto';
+import { UserType } from '@/common/decorators/user-type.decorator';
 
 @ApiTags('categories')
 @ApiBearerAuth('JWT-auth')
 @Controller('categories')
+@UserType('admin')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 

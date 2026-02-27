@@ -5,6 +5,7 @@
  */
 
 import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import { Button, message, Modal } from 'antd'
 import { PlusOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
 import { QuestionTable } from '@/components/question/QuestionTable'
@@ -13,13 +14,15 @@ import { useQuestions } from '@/hooks/useQuestions'
 import { useQuestion } from '@/hooks/useQuestion'
 import { useCategories } from '@/hooks/useCategories'
 import { useFilterStore } from '@/stores'
+import type { QuestionStatus } from '@/types'
 
 export function QuestionListPage() {
   const navigate = useNavigate()
   const { questions, total, isLoading } = useQuestions()
-  const { remove, isDeleting } = useQuestion()
+  const { remove, changeStatus, isDeleting, isChangingStatus } = useQuestion()
   const { categories } = useCategories()
   const { questionFilters, setQuestionFilters, resetQuestionFilters } = useFilterStore()
+  const [changingStatusId, setChangingStatusId] = useState<string | null>(null)
 
   // 处理编辑
   const handleEdit = (id: string) => {
@@ -39,11 +42,24 @@ export function QuestionListPage() {
         try {
           await remove(id)
           message.success('删除成功')
-        } catch (error) {
-          message.error('删除失败')
+        } catch (error: any) {
+          message.error(error?.message || '删除失败')
         }
       },
     })
+  }
+
+  // 处理状态流变更
+  const handleChangeStatus = async (id: string, targetStatus: QuestionStatus) => {
+    try {
+      setChangingStatusId(id)
+      await changeStatus(id, targetStatus)
+      message.success('状态更新成功')
+    } catch (error: any) {
+      message.error(error?.message || '状态更新失败')
+    } finally {
+      setChangingStatusId(null)
+    }
   }
 
   // 处理分页变化
@@ -76,7 +92,7 @@ export function QuestionListPage() {
       {/* 题目列表 */}
       <QuestionTable
         questions={questions}
-        loading={isLoading || isDeleting}
+        loading={isLoading || isDeleting || isChangingStatus}
         pagination={{
           current: questionFilters.page,
           pageSize: questionFilters.pageSize,
@@ -84,6 +100,8 @@ export function QuestionListPage() {
         }}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onChangeStatus={handleChangeStatus}
+        changingStatusId={changingStatusId}
         onPageChange={handlePageChange}
       />
     </div>

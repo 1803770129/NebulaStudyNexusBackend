@@ -14,6 +14,7 @@ import {
 } from 'typeorm';
 import { QuestionType } from '../enums/question-type.enum';
 import { DifficultyLevel } from '../enums/difficulty-level.enum';
+import { QuestionStatus } from '../enums/question-status.enum';
 import { Category } from '@/modules/category/entities/category.entity';
 import { Tag } from '@/modules/tag/entities/tag.entity';
 import { User } from '@/modules/user/entities/user.entity';
@@ -60,6 +61,31 @@ export class Question {
     enum: DifficultyLevel,
   })
   difficulty: DifficultyLevel;
+
+  @Column({
+    type: 'enum',
+    enum: QuestionStatus,
+    default: QuestionStatus.DRAFT,
+  })
+  status: QuestionStatus;
+
+  @Column({ type: 'timestamp', nullable: true })
+  reviewedAt: Date | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  reviewedById: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  publishedAt: Date | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  publishedById: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  archivedAt: Date | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  archivedById: string | null;
 
   @ManyToOne(() => Category, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'categoryId' })

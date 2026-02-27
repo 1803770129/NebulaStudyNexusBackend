@@ -96,12 +96,12 @@ export const FormulaDialog: React.FC<FormulaDialogProps> = ({
       <Space direction="vertical" style={{ width: '100%' }} size="middle">
         <div>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            输入 LaTeX 公式代码：
+            输入公式语法代码：
           </Text>
           <TextArea
             value={latex}
             onChange={(e) => setLatex(e.target.value)}
-            placeholder="例如: E = mc^2 或 \frac{a}{b}"
+            placeholder="例如：分式、根号、上下标等公式"
             autoSize={{ minRows: 3, maxRows: 6 }}
             style={{ marginTop: 8, fontFamily: 'monospace' }}
           />
@@ -152,7 +152,7 @@ export const FormulaDialog: React.FC<FormulaDialogProps> = ({
             <ul style={{ margin: 0, paddingLeft: 20 }}>
               <li>行内公式使用 $...$ 包裹</li>
               <li>块级公式使用 $$...$$ 包裹</li>
-              <li>支持标准 LaTeX 数学语法</li>
+              <li>支持标准数学公式语法</li>
             </ul>
           }
           type="info"

@@ -72,7 +72,7 @@ const itemStatusColorMap: Record<string, string> = {
 function formatDuration(totalSeconds?: number): string {
   const normalized = Math.max(0, Math.round(totalSeconds ?? 0))
   if (normalized === 0) {
-    return '0s'
+    return '0秒'
   }
 
   const hours = Math.floor(normalized / 3600)
@@ -80,13 +80,13 @@ function formatDuration(totalSeconds?: number): string {
   const seconds = normalized % 60
 
   if (hours > 0) {
-    return `${hours}h ${minutes}m ${seconds}s`
+    return `${hours}小时 ${minutes}分 ${seconds}秒`
   }
   if (minutes > 0) {
-    return `${minutes}m ${seconds}s`
+    return `${minutes}分 ${seconds}秒`
   }
 
-  return `${seconds}s`
+  return `${seconds}秒`
 }
 
 export function PracticeSessionManagePage() {
@@ -153,7 +153,7 @@ export function PracticeSessionManagePage() {
 
   const columns: ColumnsType<AdminPracticeSession> = [
     {
-      title: '会话 ID',
+      title: '会话编号',
       dataIndex: 'id',
       key: 'id',
       width: 220,
@@ -394,7 +394,7 @@ export function PracticeSessionManagePage() {
           {!detail ? null : (
             <>
               <Descriptions bordered column={2} size="small" style={{ marginBottom: 16 }}>
-                <Descriptions.Item label="会话 ID" span={2}>
+                <Descriptions.Item label="会话编号" span={2}>
                   {detail.id}
                 </Descriptions.Item>
                 <Descriptions.Item label="学生">{detail.student?.nickname || '-'}</Descriptions.Item>
@@ -472,7 +472,7 @@ export function PracticeSessionManagePage() {
                     width: 70,
                   },
                   {
-                    title: '题目 ID',
+                    title: '题目编号',
                     dataIndex: 'questionId',
                     key: 'questionId',
                     render: (questionId: string) => (

@@ -10,6 +10,7 @@ import { UploadService } from './upload.service';
 import { CDNService } from './cdn/cdn.service';
 import { MigrationService } from './cdn/migration.service';
 import { Question } from '@/modules/question/entities/question.entity';
+import { StudentUploadController } from './student-upload.controller';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { Question } from '@/modules/question/entities/question.entity';
       },
     }),
   ],
-  controllers: [UploadController],
+  controllers: [UploadController, StudentUploadController],
   providers: [UploadService, CDNService, MigrationService],
   exports: [UploadService, CDNService, MigrationService],
 })
