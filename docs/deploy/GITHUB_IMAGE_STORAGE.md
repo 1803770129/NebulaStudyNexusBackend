@@ -92,7 +92,7 @@
 
 **Token 示例：**
 ```
-ghp_1234567890abcdefghijklmnopqrstuvwxyz
+
 ```
 
 ### 2.4 Token 安全建议
