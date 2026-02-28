@@ -11,7 +11,6 @@ import { Question } from '@/modules/question/entities/question.entity';
 import { UserRole } from '@/modules/user/enums/user-role.enum';
 import { QuestionType } from '@/modules/question/enums/question-type.enum';
 import { DifficultyLevel } from '@/modules/question/enums/difficulty-level.enum';
-import * as bcrypt from 'bcrypt';
 async function seed() {
   console.log('🌱 Starting seed...');
 
@@ -25,19 +24,18 @@ async function seed() {
   const tagRepo = AppDataSource.getRepository(Tag);
   const questionRepo = AppDataSource.getRepository(Question);
 
-  // 清空数据（按依赖顺序）
-  await questionRepo.delete({});
-  await tagRepo.delete({});
-  await categoryRepo.delete({});
-  await userRepo.delete({});
-  console.log('🗑️ Cleared existing data');
+  // Clear tables in dependency order. TypeORM 0.3+ forbids delete({}).
+  await questionRepo.createQueryBuilder().delete().execute();
+  await tagRepo.createQueryBuilder().delete().execute();
+  await categoryRepo.createQueryBuilder().delete().execute();
+  await userRepo.createQueryBuilder().delete().execute();
+  console.log('🗑�?Cleared existing data');
 
-  // 创建管理员用户
-  const adminPassword = await bcrypt.hash('admin123', 10);
+  // 创建管理员用�?  const adminPassword = await bcrypt.hash('admin123', 10);
   const admin = userRepo.create({
     username: 'admin',
     email: 'admin@example.com',
-    password: adminPassword,
+    password: 'admin123',
     role: UserRole.ADMIN,
   });
   await userRepo.save(admin);
@@ -83,7 +81,7 @@ async function seed() {
   await tagRepo.save(importantTag);
 
   const examTag = tagRepo.create({
-    name: '考试常考',
+    name: '考试常�?',
     color: '#fa8c16',
   });
   await tagRepo.save(examTag);
@@ -93,33 +91,33 @@ async function seed() {
     color: '#52c41a',
   });
   await tagRepo.save(basicTag);
-  console.log('🏷️ Created tags');
+  console.log('🏷�?Created tags');
 
   // 创建示例题目
   const question1 = questionRepo.create({
-    title: '一元二次方程求解',
+    title: '一元二次方程求�?',
     content: {
-      raw: '求方程 x² - 5x + 6 = 0 的解',
-      rendered: '求方程 x² - 5x + 6 = 0 的解',
+      raw: '求方�?x² - 5x + 6 = 0 的解',
+      rendered: '求方�?x² - 5x + 6 = 0 的解',
     },
     type: QuestionType.SHORT_ANSWER,
     difficulty: DifficultyLevel.EASY,
     categoryId: algebraCategory.id,
     tags: [basicTag, examTag],
-    answer: 'x = 2 或 x = 3',
+    answer: 'x = 2 �?x = 3',
     explanation: {
-      raw: '使用因式分解：(x-2)(x-3) = 0',
-      rendered: '使用因式分解：(x-2)(x-3) = 0',
+      raw: '使用因式分解�?x-2)(x-3) = 0',
+      rendered: '使用因式分解�?x-2)(x-3) = 0',
     },
     creatorId: admin.id,
   });
   await questionRepo.save(question1);
 
   const question2 = questionRepo.create({
-    title: '三角形面积公式',
+    title: '三角形面积公�?',
     content: {
-      raw: '已知三角形底边长为 10，高为 6，求面积',
-      rendered: '已知三角形底边长为 10，高为 6，求面积',
+      raw: '已知三角形底边长�?10，高�?6，求面积',
+      rendered: '已知三角形底边长�?10，高�?6，求面积',
     },
     type: QuestionType.SINGLE_CHOICE,
     difficulty: DifficultyLevel.EASY,
@@ -133,8 +131,8 @@ async function seed() {
     ],
     answer: 'A',
     explanation: {
-      raw: '三角形面积 = 底 × 高 ÷ 2 = 10 × 6 ÷ 2 = 30',
-      rendered: '三角形面积 = 底 × 高 ÷ 2 = 10 × 6 ÷ 2 = 30',
+      raw: '三角形面�?= �?× �?÷ 2 = 10 × 6 ÷ 2 = 30',
+      rendered: '三角形面�?= �?× �?÷ 2 = 10 × 6 ÷ 2 = 30',
     },
     creatorId: admin.id,
   });
@@ -147,11 +145,11 @@ async function seed() {
   await tagRepo.update(basicTag.id, { questionCount: 2 });
   await tagRepo.update(examTag.id, { questionCount: 1 });
 
-  console.log('✅ Seed completed successfully!');
+  console.log('�?Seed completed successfully!');
   await AppDataSource.destroy();
 }
 
 seed().catch((error) => {
-  console.error('❌ Seed failed:', error);
+  console.error('�?Seed failed:', error);
   process.exit(1);
 });
